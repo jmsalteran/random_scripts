@@ -1,0 +1,30 @@
+{
+  "name": "typescript-scripts",
+  "version": "1.0.0",
+  "description": "A project to test individual TypeScript scripts with shared utilities and types.",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.829.0",
+    "@aws-sdk/client-secrets-manager": "^3.828.0",
+    "aws-sdk": "^2.1692.0",
+    "axios": "^1.10.0",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.0",
+    "jest": "^27.0.0",
+    "ts-jest": "^27.0.0",
+    "typescript": "^4.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/typescript-scripts.git"
+  },
+  "keywords": [],
+  "author": "Your Name",
+  "license": "MIT"
+}
