@@ -201,40 +201,49 @@ exports.simulatedIBANTransaction = {
     type: "DEPOSIT",
     transactionId: `jm-test-transaction-${Math.floor(Date.now())}`,
     timestamp: Math.floor(Date.now()),
-    destinationUserId: "jm-test-user-1751927659912",
+    //originUserId: "jm-test-user-1751995035686",
+    destinationUserId: "jm-test-user-1751994983630",
     destinationAmountDetails: {
-        transactionAmount: 1000,
+        transactionAmount: 1999,
         transactionCurrency: "EUR",
         country: "US"
     },
     originAmountDetails: {
-        transactionAmount: 1000,
-        transactionCurrency: "USD",
+        transactionAmount: 1999,
+        transactionCurrency: "EUR",
         country: "US"
     },
     originPaymentDetails: {
+        // method: "IBAN",
         method: "IBAN",
-        name: "John Doe",
+        IBAN: "DE89370400440532013000",
+        name: "John Test",
         bankName: "Deutsche Bank",
-        country: "US",
-        tags: [
-            {
-                key: "transaction_category",
-                value: "peer_to_peer"
-            },
-        ]
+        country: "BR",
+        tags: []
+        // routingNumber: "12345678290",
+        // accountNumber: "31234567890",
+        // bankName: "Bank of America",
     },
     destinationPaymentDetails: {
         method: "IBAN",
-        IBAN: "DE89370400440532013000",
-        name: "John Doe",
+        IBAN: "DE89370400440532013001",
+        name: "John Test",
         bankName: "Deutsche Bank",
-        country: "US",
-        tags: [
-            {
-                key: "transaction_category",
-                value: "peer_to_peer"
-            },
-        ]
-    }
+        country: "BR",
+        tags: []
+        // routingNumber: "12345367890",
+        // accountNumber: "12145678290",
+        // bankName: "Bank of America",
+    },
+    tags: [
+        {
+            key: "isFirstTransaction",
+            value: "true"
+        },
+        {
+            key: "isThirdPartyTransaction",
+            value: "false"
+        }
+    ]
 };
