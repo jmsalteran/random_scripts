@@ -203,14 +203,14 @@ export const testUser = {
     transactionId: `jm-test-transaction-${Math.floor(Date.now())}`,
     timestamp: Math.floor(Date.now()),
     //originUserId: "jm-test-user-1751995035686",
-    destinationUserId: "jm-test-user-1751994983630",
+    destinationUserId: "jm-test-user-1752092338147",
     destinationAmountDetails: {
-      transactionAmount: 1999,
+      transactionAmount: 298,
       transactionCurrency: "EUR",
       country: "US"
     },
     originAmountDetails: {
-      transactionAmount: 1999,
+      transactionAmount: 350,
       transactionCurrency: "EUR",
       country: "US"
     },
@@ -240,11 +240,55 @@ export const testUser = {
     tags: [
       {
         key: "isFirstTransaction",
-        value: "true"
+        value: "false"
       },
       {
         key: "isThirdPartyTransaction",
         value: "false"
       }
     ]
+  }
+
+  export const simulatedCRYPTOTransaction: VerifyTransaction = {
+    type: "WITHDRAWAL",
+    transactionId: `jm-test-transaction-${Math.floor(Date.now())}`,
+    timestamp: Math.floor(Date.now()),
+    //originUserId: "jm-test-user-1751995035686",
+    destinationUserId: "jm-test-user-1752092338147",
+    destinationAmountDetails: {
+      transactionAmount: 298,
+      transactionCurrency: "EUR",
+      country: "US"
+    },
+    originAmountDetails: {
+      transactionAmount: 350,
+      transactionCurrency: "EUR",
+      country: "US"
+    },
+    originPaymentDetails: {
+      // method: "IBAN",
+      method: "WALLET",
+      walletType: "CRYPTO",
+      walletId: "1234567890",
+    },
+    destinationPaymentDetails: {
+      method: "WALLET",
+      walletType: "CRYPTO",
+      walletId: "4234567890",
+      tags: []
+    },
+    tags: [
+      {
+        key: "isFirstTransaction",
+        value: "false"
+      },
+      {
+        key: "isThirdPartyTransaction",
+        value: "false"
+      },
+      {
+        key: "previousTransactionType",
+        value: "ACH"
+      }
+    ],
   }

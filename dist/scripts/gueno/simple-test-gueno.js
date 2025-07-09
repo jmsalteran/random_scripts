@@ -95,7 +95,7 @@ function testVerifyTransaction() {
         try {
             console.log("Testing Gueno Service - Verify Transaction");
             console.log("-----------------------------------");
-            const response = yield gueno_1.default.verifyTransaction(simulated_data_test_1.simulatedIBANTransaction);
+            const response = yield gueno_1.default.verifyTransaction(simulated_data_test_1.simulatedCRYPTOTransaction);
             console.log(response);
         }
         catch (error) {

@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import GuenoService from "./gueno";
-import { testUser, simulatedTransaction, simulatedIBANTransaction } from "./simulated-data.test";
+import { testUser, simulatedTransaction, simulatedIBANTransaction, simulatedCRYPTOTransaction } from "./simulated-data.test";
 
 
 /**
@@ -86,7 +86,7 @@ async function testVerifyTransaction() {
     console.log("Testing Gueno Service - Verify Transaction");
     console.log("-----------------------------------");
 
-    const response = await GuenoService.verifyTransaction(simulatedIBANTransaction);
+    const response = await GuenoService.verifyTransaction(simulatedCRYPTOTransaction);
     console.log(response);
   } catch (error) {
     console.error("\n❌ Error occurred during test:");
