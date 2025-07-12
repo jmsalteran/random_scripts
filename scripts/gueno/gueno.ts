@@ -7,11 +7,13 @@ import {
   retrieveConsumerResponse, 
   retrieveTransactionResponse,
   TransactionEventResponse,
-  TransactionEvent
+  TransactionEvent,
+  GetConsumerList,
+  GetConsumerListResponse
 } from "./gueno.type";
 
 const IS_SANDBOX: boolean = true; // TODO: Make this dynamic using the environment variable
-const PRINT_CONSOLE_REQUEST: boolean = true;
+const PRINT_CONSOLE_REQUEST: boolean = false;
 
 const API_HOST = "https://api-gueno.prd.gueno.com/api";
 const API_DASHBOARD = "https://www.dashboard.gueno.io";
@@ -181,6 +183,39 @@ class GuenoService {
       `${this.getApiUrl(IS_SANDBOX)}/kyt/updateTransaction/${transactionId}`,
       "POST",
       data
+    );
+    return response;
+  }
+
+  /*
+  * Get consumer list
+  * @param data - The data to get the consumer list
+  * @returns The response from the API
+  */
+  static async getConsumerList(
+    data: GetConsumerList
+  ): Promise<GetConsumerListResponse> {
+    // Build query parameters from the data object
+    const queryParams = new URLSearchParams();
+    
+    if (data.viewMode !== undefined) {
+      queryParams.append('viewMode', data.viewMode);
+    }
+    if (data.limit !== undefined) {
+      queryParams.append('limit', data.limit.toString());
+    }
+    if (data.offset !== undefined) {
+      queryParams.append('offset', data.offset.toString());
+    }
+    if (data.page !== undefined) {
+      queryParams.append('page', data.page.toString());
+    }
+    
+    const url = `${this.getApiUrl(IS_SANDBOX)}/kyt/consumerUsers/meru@gueno.com?${queryParams.toString()}`;
+    
+    const response = await this.guenoRequest(
+      url,
+      "GET"
     );
     return response;
   }

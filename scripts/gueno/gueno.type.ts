@@ -948,3 +948,33 @@ export const getTransactionSummary = (transaction: VerifyTransaction): {
     currency: transaction.destinationAmountDetails?.transactionCurrency || "USD"
   };
 };
+
+/**
+ * Get consumer list request parameters
+ */
+export interface GetConsumerList {
+  viewMode?: string;
+  limit?: number;
+  offset?: number;
+  page?: number;
+}
+
+/**
+ * Pagination information
+ */
+export interface PaginationInfo {
+  totalElements: number;
+  elementsPerPage: number;
+  currentPage: string;
+}
+
+/**
+ * Get consumer list response
+ */
+export interface GetConsumerListResponse {
+  success: boolean;
+  message: string;
+  pagination: PaginationInfo;
+  unique: Record<string, any>;
+  data: UserDataParams[];
+}
