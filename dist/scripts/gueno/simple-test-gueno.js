@@ -95,7 +95,7 @@ function testVerifyTransaction() {
         try {
             console.log("Testing Gueno Service - Verify Transaction");
             console.log("-----------------------------------");
-            const response = yield gueno_1.default.verifyTransaction(simulated_data_test_1.simulatedCRYPTOTransaction);
+            const response = yield gueno_1.default.verifyTransaction(simulated_data_test_1.simulatedIBANTransaction);
             console.log(response);
         }
         catch (error) {
@@ -303,8 +303,8 @@ function updateAllUsersWithStandardTags() {
 // testRetrieveConsumerUser();
 // testSimpleCreateConsumerUser();
 // testUpdateConsumerUser();
-//testVerifyTransaction();
-//  testGetTransaction();
+testVerifyTransaction();
+// testGetTransaction();
 // testUpdateTransaction();
 // testGetConsumerList();
-updateAllUsersWithStandardTags();
+// updateAllUsersWithStandardTags();
