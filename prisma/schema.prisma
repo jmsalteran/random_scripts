@@ -1,0 +1,2262 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DocumentType {
+  CC
+  CE
+  PP
+  CI_VE
+  NIT
+  PPT
+  SSN
+  CUIT
+  CUIL
+  CI
+  CPF
+  CNPJ
+  PASS
+  RUT
+  CR
+  CJ
+  RN
+  RUC
+  DNI
+  CURP
+  CURPE
+  ID
+  DE
+  RIF
+  NONE
+}
+
+enum BankAccountType {
+  AHORROS
+  CORRIENTE
+  MASTER
+  VISTA
+}
+
+enum StellarTransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT
+}
+
+enum InvoiceStatus {
+  CREATED
+  SENT
+  EXPIRED
+  CANCELLED
+  PAID
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  USER_PAYMENT
+  PAYMENT
+  BILL_PAYMENT
+  BLOCK_FUNDS
+  UNBLOCK_FUNDS
+  GIFT_CLAIMED
+  EXCHANGE
+  PAYMENT_LINK
+  PAYROLL
+  USD_BANK_OPENING_FEE_PAYMENT
+  USD_BANK_DEPOSIT
+  EUR_BANK_DEPOSIT
+  USD_BANK_MICRODEPOSIT
+  ADD_FUNDS_TO_CARD
+  REMOVE_FUNDS_FROM_CARD
+  VIRTUAL_CARD_ISSUING_FEE_PAYMENT
+  DEPOSIT_TO_DEFI
+  WITHDRAW_FROM_DEFI
+  CARD_TRANSACTION
+  CASHBACK
+  PHYSICAL_CARD_ISSUING_FEE_PAYMENT
+}
+
+enum PaymentMethod {
+  PSE
+  PAYPAL
+  BANK_TRANSFER
+  CREDIT_CARD
+  ZELLE
+  CRYPTO
+  INTERNAL_BALANCE
+  CASH
+  YIELD_EARNINGS
+  REWARDS
+  PAYROLL
+  USD_BANK_PAYMENT
+  USD_BANK_MICRODEPOSIT
+  EUR_BANK_PAYMENT
+  MONEYGRAM
+  WISE
+  LOCAL_PAYMENT_METHOD
+  PAYMENT_LINK_CREDIT_CARD
+  BR_PIX
+  VE_PAGO_MOVIL
+  VE_C2P
+  BUY_CRYPTO
+  CASHBACK
+  BO_QR_CODE
+  BO_YAPE
+  KOYWE
+  AR_QR_CODE
+}
+
+enum TransactionStatus {
+  PENDING
+  PENDING_APPROVAL
+  ON_HOLD
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  REVERSED
+  REJECTED
+  FAILED
+  EXPIRED
+  CREATED
+  READY_TO_PICKUP
+  REFUNDED
+  AUTHORIZED
+  DECLINE
+  INTERNAL_AWAITING_FUNDS
+  INTERNAL_FUNDS_SENT
+  SENT_TO_PARTNER
+  FIAT_FUNDS_RECEIVED
+  FIAT_FUNDS_PENDING
+  SCREENING
+  SCREENED
+  ASSIGNED // Assigned to user, but not yet completed
+}
+
+enum CashPaymentStatus {
+  CREATED
+  PENDING
+  COMPLETED
+  CANCELLED
+  REVERSED
+  REJECTED
+  EXPIRED
+}
+
+enum MigrationState {
+  CREATED
+  ACCOUNT_CREATED
+  PENDING_BALANCE_CLAIMED
+  YUSDC_TO_USDC_TRADED
+  OLD_BALANCE_MIGRATED
+  NOT_NECESSARY
+  COMPLETED
+}
+
+enum UsdBankAccountRequestStatus {
+  REQUEST_TOS_ACCEPTANCE
+  TOS_ACCEPTED
+  CUSTOMER_CREATED
+  CUSTOMER_CREATION_ERROR
+  KYC_DOCUMENTS_SENT
+  CREATED
+  MAX_ATTEMPTS_REACHED
+  PROVIDER_REJECTED
+  UNDER_PROVIDER_REVIEW
+  AWAITING_QUESTIONARY
+}
+
+enum CardRequestStatus {
+  PROOF_OF_RESIDENCY_SENT
+  IN_REVIEW
+  CUSTOMER_CREATED
+  OPENING_FEE_PAID
+  ISSUED
+  REJECTED
+}
+
+enum AccountRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  VERY_HIGH
+}
+
+model User {
+  id                                String                         @id @default(uuid())
+  email                             String                         @unique
+  cognitoId                         String                         @unique
+  stellarAccountId                  String?                        @unique
+  stellarAccount                    StellarAccount?
+  createdAt                         DateTime                       @default(now())
+  lastSignin                        DateTime?
+  updatedAt                         DateTime?                      @updatedAt
+  country                           String?
+  avatarUrl                         String?
+  kycCompleted                      Boolean?                       @default(false)
+  kycStatus                         String?
+  kycLastUpdate                     DateTime?
+  profile                           Customer?
+  banks                             BankAccount[]
+  transactions                      TransactionLog[]
+  invoices                          Invoice[]
+  paymentLinks                      PaymentLink[]
+  devices                           Device[]
+  Transaction                       Transaction[]
+  blocked                           Boolean?
+  cashPayments                      CashPayment[]
+  paypalConfirmed                   Boolean?
+  reviewRequests                    ReviewRequest[]
+  SolidfiPerson                     SolidfiPerson[]
+  referralId                        String?
+  referral                          Referral?                      @relation(fields: [referralId], references: [id])
+  referralGiftClaimed               Boolean?                       @default(false)
+  onboardingCompleted               Boolean                        @default(false)
+  paypalWarningShowed               Boolean                        @default(false)
+  welcomeGiftClaimed                Boolean?                       @default(false)
+  physicalDevice                    PhysicalDevice?
+  ccEnabled                         Boolean                        @default(false)
+  payPalEmailAllowListed            PayPalEmailAllowListed[]
+  exchanges                         Exchange[]
+  phone                             String?                        @unique
+  phoneIsVerified                   Boolean?                       @default(false)
+  CryptoAccount                     CryptoAccount[]
+  kycCustomerId                     String?
+  kycCustomer                       KYCCustomer?
+  blockReason                       String?
+  fireblocksVault                   FireblocksVault?
+  isBusiness                        Boolean?                       @default(false)
+  PendingAccount                    PendingAccount[]
+  PendingBalance                    PendingBalance[]
+  Payroll                           Payroll[]
+  PayrollItem                       PayrollItem[]
+  isNonCustodial                    Boolean?                       @default(false)
+  nonCustodialStellarWallet         NonCustodialStellarWallet?
+  shouldConfigureAccount            Boolean?                       @default(false)
+  migrationState                    MigrationState?                @default(CREATED)
+  pin                               Pin?
+  mainCurrency                      String?
+  usdBankAccount                    UsdBankAccount?
+  usdBankAccountRequestStatus       UsdBankAccountRequestStatus?
+  usdBankAccountRequested           Boolean?
+  usdBankAccountRequestsAttempts    Int?                           @default(0)
+  payId                             PayId?
+  getFrontConnection                GetFrontConnection?
+  binanceFireblocksVault            BinanceFireblocksVault?
+  usdBankAccountFireblocksVault     USDBankAccountFireblocksVault?
+  usdBankAccountOpeningFeePaid      Boolean                        @default(false)
+  meruTermsAndConditionsAccepted    Boolean?                       @default(false)
+  addressVerified                   Boolean?                       @default(false)
+  addressVerificationStatus         String?
+  accountLimits                     AccountLimits[]
+  proofOfResidency                  ProofOfResidency?
+  deleted                           Boolean?                       @default(false)
+  deletedAt                         DateTime?
+  accountRiskLevel                  AccountRiskLevel               @default(LOW)
+  accountRiskComment                String?
+  paypalWithoutLimits               Boolean?                       @default(false)
+  cardRequestStatus                 CardRequestStatus?
+  banxaKYCShared                    Boolean?                       @default(false)
+  virtualCardRequestFeePaid         Boolean?                       @default(false)
+  wisePaymentLinks                  WisePaymentLink[]
+  cryptoAddresses                   CryptoAddress[]
+  directContracts                   DirectContract[]
+  usdBankAccountRequest             UsdBankAccountRequest?
+  bridgeCustomer                    BridgeCustomer?
+  usdVirtualBankAccount             UsdVirtualBankAccount?
+  uSDBankAccountWaitingList         USDBankAccountWaitingList?
+  pixPayment                        PixPayment[]
+  shipment                          Shipment[]
+  shipmentAddress                   ShipmentAddress[]
+  rainCardCustomer                  RainCardCustomer?
+  savingCircle                      SavingCircle?
+  savingCirclesJoined               UsersOnSavingCircles[]
+  kycDocumentMedia                  KYCDocumentMedia[]
+  moneyFlows                        MoneyFlow[]
+  cardRequests                      CardRequest[]
+  hasDeFiEnabled                    Boolean?                       @default(false)
+  shouldAskKYC                      Boolean?                       @default(false)
+  shouldAskProofOfResidence         Boolean?                       @default(false)
+  rainCards                         RainCard[]
+  hasPaymentLinksEnabled            Boolean?                       @default(false)
+  portalUserId                      String?                        @unique
+  portalUser                        PortalUser?
+  hasPSEEnabled                     Boolean?                       @default(false)
+  paybisFireblocksVault             PaybisFireblocksVault?
+  meruTag                           MeruTag?
+  twoFactorAuth                     TwoFactorAuth?
+  cardTransactionDisputes           CardTransactionDispute[]
+  hasWeb3Enabled                    Boolean?                       @default(false)
+  pagoMovilPhoneNumber              String?
+  mantecaUser                       MantecaUser?
+  mantecaBankAccount                MantecaBankAccount[]
+  mantecaTermsAndConditionsAccepted Boolean?                       @default(false)
+  hasAbandonedKYCProcess            Boolean?                       @default(false)
+  complianceRequirements            ComplianceRequirement[]
+  ibanBankAccountWaitingList        IBANBankAccountWaitingList?
+  pagoMoviles                       PagoMovil[]
+  kycDeclineReason                  String?
+  ibanVirtualAccount                IbanVirtualAccount?
+  ibanAccountRequest                IbanAccountRequest?
+  psePayment                        PSEPayment[]
+  koyweAccount                      KoyweAccount?
+  kycDuplicatedWithUserId           String?
+  lastSigninIpAddress               String?
+  accessedWithMFA                   Boolean?                       @default(false)
+  pinAttempts                       Int?                           @default(0)
+  pinBlocked                        Boolean?                       @default(false)
+  shouldAskChangePassword           Boolean?                       @default(false)
+  accessedWithMagicLink             Boolean?                       @default(false)
+  hasEmailMFAEnabled                Boolean?                       @default(false)
+  blendVersion                      String?
+  blindpayCustomer                  BlindpayCustomer?
+  blindpayWallet                    BlindpayWallet[]
+  blindpayVirtualBankAccount        BlindpayVirtualBankAccount[]
+  blindpayUSBankAccountRequest      BlindpayUSBankAccountRequest?
+  appsFlyerUID                      String?
+  guenoUserId                       String?                        @unique
+  physicalCardRequests              PhysicalCardRequest[]
+  shippingInfo                      ShippingInfo[]
+  easyshipOrder                     EasyshipOrder[]
+  arQrCodePayments                  ArQrCodePayment[]
+  lastPasswordChangeAt              DateTime?
+}
+
+model StellarAccount {
+  id             String           @id @default(uuid())
+  publicKey      String           @unique
+  secretKey      String           @unique
+  userId         String           @unique
+  user           User             @relation(fields: [userId], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime?        @updatedAt
+  PendingAccount PendingAccount[]
+}
+
+model Customer {
+  id                     String              @id @default(uuid())
+  userId                 String              @unique
+  documentType           DocumentType?
+  documentNumber         String?
+  documentExpirationDate DateTime?
+  documentExpeditionDate DateTime
+  firstName              String
+  middleName             String?
+  lastName               String
+  address                String
+  secondLastName         String?
+  user                   User                @relation(fields: [userId], references: [id])
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime?           @updatedAt
+  city                   String?
+  dateOfBirth            DateTime?
+  completeAddress        Address?
+  customerOccupation     CustomerOccupation?
+  cards                  Card[]
+
+  @@unique([documentType, documentNumber], name: "customerIdentifier")
+}
+
+model TransactionSupport {
+  id                    String                 @id @default(uuid())
+  stellarTransactionId  String                 @unique
+  transactionSupportUrl String
+  stellarTrasactionType StellarTransactionType
+  amount                Decimal                @db.Decimal(35, 8)
+}
+
+model Rate {
+  id    String  @id @default(uuid())
+  name  String  @unique
+  value Decimal @db.Decimal(35, 8)
+}
+
+model BankAccount {
+  id                 String              @id @default(uuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id])
+  beneficiaryName    String
+  documentType       DocumentType
+  documentNumber     String
+  accountType        BankAccountType
+  accountNumber      String
+  bankName           String
+  country            String
+  isExternal         Boolean?            @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime?           @updatedAt
+  transactions       Transaction[]
+  email              String?
+  bankCode           String?
+  beneficiaryAddress String?
+  beneficiaryType    String?
+  vitaRawData        String?
+  deleted            Boolean?            @default(false)
+  externalProviderId String?
+  externalBankName   String?
+  koyweBankAccount   KoyweBankAccount?
+  mantecaBankAccount MantecaBankAccount?
+}
+
+model TransactionLog {
+  id                   String             @id @default(uuid())
+  transactionId        String?
+  transaction          Transaction?       @relation(fields: [transactionId], references: [id])
+  status               TransactionStatus?
+  userId               String
+  user                 User               @relation(fields: [userId], references: [id])
+  type                 String
+  stellarTransactionId String?
+  amount               Decimal            @db.Decimal(35, 8)
+  extraData            String?
+  currency             String
+  createdAt            DateTime           @default(now())
+}
+
+model PaymentLink {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  shareUrl String   @unique
+  invoice  Invoice?
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  count       Int
+  amount      Decimal @db.Decimal(35, 8)
+  tax         Decimal @default(0) @db.Decimal(35, 8)
+}
+
+model Invoice {
+  id                       String                     @id @default(uuid())
+  userId                   String
+  payeerUserId             String?
+  user                     User                       @relation(fields: [userId], references: [id])
+  amount                   Decimal                    @db.Decimal(35, 8)
+  tax                      Decimal                    @default(0) @db.Decimal(35, 8)
+  description              String?
+  paymentLink              PaymentLink                @relation(fields: [paymentLinkId], references: [id])
+  paymentLinkId            String                     @unique
+  payeerEmail              String?
+  payeerFullName           String?
+  invoiceItems             InvoiceItem[]
+  createdAt                DateTime                   @default(now())
+  expireAt                 DateTime?
+  paidAt                   DateTime?
+  imageUrl                 String?
+  status                   InvoiceStatus              @default(CREATED)
+  transactionId            String?
+  transaction              Transaction?               @relation(fields: [transactionId], references: [id])
+  invoiceNumber            String?
+  PaymentLinkPaymentIntent PaymentLinkPaymentIntent[]
+  tipAmount                Decimal?                   @default(0) @db.Decimal(35, 8)
+  feesPaidByPayeer         Boolean?                   @default(false)
+  ipAddressCreation        String?
+  ipAddressPayment         String?
+}
+
+model Device {
+  id       String @id @default(uuid())
+  userId   String @unique
+  fcmToken String @unique
+  user     User   @relation(fields: [userId], references: [id])
+}
+
+enum CardProvider {
+  RAIN
+  BAN_TRANSFER
+}
+
+enum TransactionSubStatus {
+  COMPLIANCE_CHECK
+  INTERNAL_ERROR
+  SCREENING_PENDING_APPROVAL
+}
+
+enum ComplianceCheckingStatus {
+  BLOCK
+  ALLOW
+  FLAG
+  SUSPEND
+}
+
+model Transaction {
+  id                                 String                      @id @default(uuid())
+  userId                             String
+  user                               User                        @relation(fields: [userId], references: [id])
+  stellarTransactionId               String?                     @unique
+  type                               TransactionType
+  paymentMethod                      PaymentMethod?
+  amount                             Decimal                     @db.Decimal(35, 8)
+  fee                                Decimal?                    @default(0) @db.Decimal(35, 8)
+  feeInUsd                           Decimal?                    @default(0) @db.Decimal(35, 8)
+  amountFinal                        Decimal?                    @db.Decimal(35, 8)
+  toAmount                           Decimal?                    @db.Decimal(35, 8)
+  toUserId                           String?
+  toBankAccountId                    String?
+  bankAccount                        BankAccount?                @relation(fields: [toBankAccountId], references: [id])
+  toMantecaBankAccountId             String?
+  mantecaBankAccount                 MantecaBankAccount?         @relation(fields: [toMantecaBankAccountId], references: [id])
+  toExternalId                       String?
+  externalType                       String?
+  currency                           String?
+  stripePaymentIntentId              String?
+  finalCurrency                      String?
+  supportImageUrl                    String?
+  relatedTransactionId               String?
+  status                             TransactionStatus           @default(PENDING)
+  invoices                           Invoice[]
+  createdAt                          DateTime                    @default(now())
+  updatedAt                          DateTime?                   @updatedAt
+  cashPayment                        CashPayment?
+  TransactionLog                     TransactionLog[]
+  providerTransactionId              String?
+  internalFee                        Decimal?                    @db.Decimal(35, 8)
+  externalTransactionId              String?
+  exchange                           Exchange?
+  withdrawalSettlementId             String?
+  withdrawalSettlement               WithdrawalSettlement?       @relation(fields: [withdrawalSettlementId], references: [id])
+  eta                                DateTime?
+  cryptoHash                         String?
+  cryptoAccount                      CryptoAccount?              @relation(fields: [cryptoAccountId], references: [id])
+  cryptoAccountId                    String?
+  blockchainAddress                  String?
+  sourceBlockchainAddress            String?
+  paypalTransactionId                String?
+  paypalTransactionStatus            String?
+  fireblocksVaultId                  String?
+  blockchain                         String?
+  fireblocksTransactionId            String?
+  reversalFireblocksTransactionId    String?
+  fireblocksSweepTransactionId       String?
+  blockchainAddressMemo              String?
+  fiatProvider                       String?
+  fiatReferenceNumber                String?
+  fiatError                          String?
+  fiatRate                           Decimal?                    @db.Decimal(35, 8)
+  buyFiatRate                        Decimal?                    @db.Decimal(35, 8)
+  payrollPayeerId                    String?
+  koyweOrderId                       String?
+  pagoMovilPhoneNumber               String?
+  meruDepositReference               String?
+  isBinance                          Boolean?
+  sardineOrderId                     String?
+  usdBankAccountId                   String?
+  usdBankAccount                     UsdBankAccount?             @relation(fields: [usdBankAccountId], references: [id])
+  creditCardFingerprint              String?
+  stripeRefundId                     String?
+  moneygramTransactionId             String?
+  ipAddress                          String?
+  paypalSupportUrl                   String?
+  paypalService                      String?
+  paypalSignedAt                     DateTime?
+  isRefund                           Boolean?
+  transactionEnvelope                String?                     @unique
+  WisePaymentLink                    WisePaymentLink[]
+  usdVirtualBankAccount              UsdVirtualBankAccount?      @relation(fields: [usdVirtualBankAccountId], references: [id])
+  usdVirtualBankAccountId            String?
+  usdVirtualBankAccountSenderName    String?
+  usdVirtualBankAccountPaymentRail   String?
+  bridgeTransactionId                String?
+  usdVirtualBankAccountTxDescription String?
+  pixKey                             String?
+  pixTransactionId                   String?
+  pixPayment                         PixPayment[]
+  pendingBalances                    PendingBalance[]
+  providerAmount                     Decimal?
+  referenceBankReverse               String?
+  cardId                             String?
+  cardProviderTransactionId          String?                     @unique
+  localAmount                        Decimal?
+  localCurrency                      String?
+  liquidityTransactionId             String?                     @unique
+  paymentRail                        String?
+  cardProvider                       CardProvider?               @default(RAIN)
+  cardTransactionDispute             CardTransactionDispute?
+  cardDeclineReason                  String?
+  boPagoFacilMeruReference           String?
+  tesabizTransactionId               String?                     @unique
+  boYapePayment                      BoYapePayment?
+  revenue                            Decimal?                    @db.Decimal(35, 8)
+  usdSentToPartner                   Decimal?                    @db.Decimal(35, 8)
+  ibanVirtualAccount                 IbanVirtualAccount?         @relation(fields: [ibanVirtualAccountId], references: [id])
+  ibanVirtualAccountId               String?
+  psePayment                         PSEPayment?
+  incomingFireblocksTransactionId    String?
+  // This is used for control and reconciliation purposes
+  controlFixedFeeUsd                 Decimal?                    @db.Decimal(35, 8)
+  controlVariableFeeUsd              Decimal?                    @db.Decimal(35, 8)
+  controlFixedFeeLocal               Decimal?                    @db.Decimal(35, 8)
+  controlVariableFeeLocal            Decimal?                    @db.Decimal(35, 8)
+  controlProviderFixedFeeUsd         Decimal?                    @db.Decimal(35, 8)
+  controlProviderVariableFeeUsd      Decimal?                    @db.Decimal(35, 8)
+  controlProviderFixedFeeLocal       Decimal?                    @db.Decimal(35, 8)
+  controlProviderVariableFeeLocal    Decimal?                    @db.Decimal(35, 8)
+  controlMeruTotalRevenue            Decimal?                    @db.Decimal(35, 8)
+  controlMeruGrossMargin             Decimal?                    @db.Decimal(35, 8)
+  // statuses timestamps
+  completedAt                        DateTime?
+  rejectedAt                         DateTime?
+  blindpayVirtualBankAccount         BlindpayVirtualBankAccount? @relation(fields: [blindpayVirtualBankAccountId], references: [id])
+  blindpayVirtualBankAccountId       String?
+  fireblocksGasFeeTransactionId      String?                     @unique
+  arQrCodePaymentId                  String?                     @unique
+  arQrCodePayment                    ArQrCodePayment?
+  subStatus                          TransactionSubStatus?
+  complianceCheckingStatus           ComplianceCheckingStatus?
+  complianceExecutedRules            Json[]
+  complianceHitRules                 Json[]
+  screeningLevelResult               Int?
+  temporalWorkflowId                 String?                     @unique
+}
+
+model CashPayment {
+  id                     String            @id @default(uuid())
+  amount                 Decimal           @db.Decimal(35, 8)
+  commission             Decimal?          @db.Decimal(35, 8)
+  paycashId              String?
+  userId                 String
+  user                   User              @relation(fields: [userId], references: [id])
+  paymentNetwork         String
+  paymentReference       String            @unique()
+  paymentAgreementNumber String?
+  transactionId          String?           @unique
+  expireAt               DateTime
+  transaction            Transaction?      @relation(fields: [transactionId], references: [id])
+  status                 CashPaymentStatus
+  paidAt                 DateTime?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime?         @updatedAt
+}
+
+enum Platfom {
+  ANDROID
+  IOS
+}
+
+model ReviewRequest {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  platform      Platfom
+  lastTimeAsked DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model SolidfiPerson {
+  id               String    @id @default(uuid())
+  solidfiId        String
+  userId           String    @unique
+  solidfiProgramId String
+  user             User      @relation(fields: [userId], references: [id])
+  status           String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime? @updatedAt
+}
+
+model SolidfiBankAccount {
+  id                String    @id @default(uuid())
+  solidfiId         String
+  userId            String
+  accountHolderName String
+  routingNumber     String
+  accountNumber     String
+  status            String
+  type              String
+  sponsorBankName   String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime? @updatedAt
+}
+
+model SolidfiCard {
+  id             String    @id @default(uuid())
+  solidfiId      String
+  userId         String
+  bankAccountId  String
+  cardHolderName String
+  cardType       String
+  currency       String
+  expiryMonth    String
+  expiryYear     String
+  last4          String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+}
+
+model CardWaitingList {
+  id         String    @id @default(uuid())
+  userId     String    @unique
+  position   Int       @default(0)
+  released   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  releasedAt DateTime?
+}
+
+model USDBankAccountWaitingList {
+  id         String    @id @default(uuid())
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id])
+  position   Int       @default(0)
+  released   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  releasedAt DateTime?
+}
+
+model CreditCard {
+  id          String    @id @default(uuid())
+  fingerprint String    @unique
+  userId      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+}
+
+model Referral {
+  id                    String                 @id @default(uuid())
+  userId                String
+  code                  String                 @unique
+  createdAt             DateTime               @default(now())
+  referralProgramId     String
+  referralProgram       ReferralProgram        @relation(fields: [referralProgramId], references: [id])
+  usersWhoHaveUsed      User[]
+  blocked               Boolean?               @default(false)
+  referralRegistrations ReferralRegistration[]
+
+  @@unique([userId, referralProgramId])
+}
+
+model ReferralProgram {
+  id                    String           @id @default(uuid())
+  amountToReferrer      Decimal          @db.Decimal(35, 8)
+  amountToReferenced    Decimal          @db.Decimal(35, 8)
+  expirationDate        DateTime?
+  maxAmount             Decimal?         @db.Decimal(35, 8)
+  maxAmountPerAccount   Decimal?         @default(0) @db.Decimal(35, 8)
+  currency              String           @default("USD")
+  isActive              Boolean?         @default(true)
+  minAmount             Decimal?         @default(10) @db.Decimal(35, 8)
+  maxReferrals          Decimal?         @default(20) @db.Decimal(35, 8)
+  daysToComplete        Int?
+  referrals             Referral[]
+  paymentMethods        PaymentMethod[]
+  textConditions        String?
+  textDescription       String?
+  shareText             String?
+  shareTitle            String?
+  country               String?
+  transactionType       TransactionType?
+  termsAndConditionsUrl String?
+}
+
+model PhysicalDevice {
+  id        String    @id @default(uuid())
+  deviceId  String    @unique
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id])
+  name      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model Country {
+  id                 String  @id @unique
+  name               String  @unique
+  enabled            Boolean @default(true)
+  flagCode           String
+  isoCurrencyCode    String
+  order              Int     @default(0)
+  assetCode          String?
+  assetIssuerAddress String?
+}
+
+model BankCountry {
+  id              String  @id @unique
+  name            String  @unique
+  enabled         Boolean @default(true)
+  flagCode        String
+  isoCurrencyCode String
+  currencyName    String
+  order           Int     @default(0)
+}
+
+model PayPalEmailAllowListed {
+  id     String @id @default(uuid())
+  email  String
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Configuration {
+  id        String    @id @default(uuid())
+  name      String
+  value     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model Exchange {
+  id            String      @id @default(uuid())
+  fromCurrency  String
+  toCurrency    String
+  rate          Decimal     @default(1) @db.Decimal(35, 8)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime?   @updatedAt
+  transactionId String      @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+}
+
+model WithdrawalSettlement {
+  id                              String        @id @default(uuid())
+  country                         String        @unique
+  daysToSettlement                Int
+  settlementOnWeekendsAndHolidays Boolean       @default(false)
+  monCutOffTime                   String?
+  monStartTime                    String?
+  tueCutOffTime                   String?
+  tueStartTime                    String?
+  wedCutOffTime                   String?
+  wedStartTime                    String?
+  thuCutOffTime                   String?
+  thuStartTime                    String?
+  friCutOffTime                   String?
+  friStartTime                    String?
+  satCutOffTime                   String?
+  satStartTime                    String?
+  sunCutOffTime                   String?
+  sunStartTime                    String?
+  minutesToSettlement             Int?
+  Transaction                     Transaction[]
+}
+
+model CryptoAccount {
+  id          String        @id @default(uuid())
+  userId      String
+  blockchain  String
+  user        User          @relation(fields: [userId], references: [id])
+  address     String        @unique
+  privateKey  String        @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime?     @updatedAt
+  Transaction Transaction[]
+
+  @@unique([userId, blockchain], name: "userIdBlockchainIndex")
+}
+
+model KYCCustomer {
+  id                                String    @id @default(uuid())
+  userId                            String    @unique
+  fullName                          String?
+  firstName                         String?
+  surname                           String?
+  documentNumber                    String?
+  dateOfBirth                       String?
+  expirationDate                    String?
+  documentType                      String?
+  issueCountry                      String?
+  nationality                       String?
+  sex                               String?
+  documentPhotoUrl                  String?
+  providerUrl                       String?
+  providerId                        String?   @unique
+  lastSuccessVerificationProviderId String?   @unique
+  provider                          String?
+  createdAt                         DateTime  @default(now())
+  updatedAt                         DateTime? @updatedAt
+  user                              User      @relation(fields: [userId], references: [id])
+  mxCURP                            String?
+  clRunNumber                       String?
+  migrated                          Boolean?
+  personNumber                      String?
+  arCuit                            String?
+  usSSN                             String?
+  brCPF                             String?
+  taxIdentificationNumber           String?
+}
+
+model FireblocksVault {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id])
+  fireblocksVaultId     String    @unique
+  active                Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime? @updatedAt
+  stellarDepositAddress String?
+  stellarDepositMemo    String?
+}
+
+model PaybisFireblocksVault {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id])
+  fireblocksVaultId     String    @unique
+  active                Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime? @updatedAt
+  stellarDepositAddress String?
+  stellarDepositMemo    String?
+}
+
+model BinanceFireblocksVault {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id])
+  fireblocksVaultId     String    @unique
+  active                Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime? @updatedAt
+  stellarDepositAddress String?
+  stellarDepositMemo    String?
+}
+
+model USDBankAccountFireblocksVault {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id])
+  fireblocksVaultId String    @unique
+  active            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime? @updatedAt
+}
+
+model Role {
+  id         String       @id @default(uuid())
+  name       String       @unique
+  SystemUser SystemUser[]
+}
+
+model SystemUser {
+  id                  String                @id @default(uuid())
+  email               String                @unique
+  firstName           String
+  lastName            String
+  countryScope        String?
+  cognitoId           String?               @unique
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime?             @updatedAt
+  roleId              String
+  role                Role                  @relation(fields: [roleId], references: [id])
+  lastSignin          DateTime?
+  TreasuryTransaction TreasuryTransaction[]
+  TreasuryAddress     TreasuryAddress[]
+}
+
+enum TreasuryTransactionStatus {
+  CREATED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model TreasuryTransaction {
+  id            String                    @id @default(uuid())
+  systemUserId  String
+  systemUser    SystemUser                @relation(fields: [systemUserId], references: [id])
+  amount        Decimal                   @db.Decimal(35, 8)
+  currency      String
+  sourceId      String
+  source        TreasuryAddress           @relation(fields: [sourceId], references: [id])
+  destinationId String
+  destination   TreasuryAddress           @relation(fields: [destinationId], references: [id], name: "destination")
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime?
+  status        TreasuryTransactionStatus
+  txHash        String?
+}
+
+enum TreasuryAddressDestination {
+  CIRCLE
+  FIREBLOCKS
+  INTERNAL
+  PAYPAL
+  CHASE
+}
+
+model TreasuryAddress {
+  id           String                     @id @default(uuid())
+  createdAt    DateTime                   @default(now())
+  createdBy    String
+  creatorUser  SystemUser                 @relation(fields: [createdBy], references: [id])
+  source       TreasuryAddressDestination
+  address      String?
+  addressId    String?
+  tag          String?
+  blockchain   String?
+  description  String?
+  currency     String?                    @default("USDC")
+  sources      TreasuryTransaction[]
+  destinations TreasuryTransaction[]      @relation(name: "destination")
+}
+
+model BannedCryptoAddress {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  address    String
+  blockchain String
+}
+
+model PendingAccount {
+  id               String           @id @default(uuid())
+  email            String?          @unique
+  phone            String?          @unique
+  stellarAccount   StellarAccount?  @relation(fields: [stellarAccountId], references: [id])
+  stellarAccountId String?          @unique
+  userId           String?          @unique
+  user             User?            @relation(fields: [userId], references: [id])
+  createdAt        DateTime         @default(now())
+  claimedAt        DateTime?
+  pendingBalances  PendingBalance[]
+}
+
+model PendingBalance {
+  id                String           @id @default(uuid())
+  amount            Decimal          @db.Decimal(35, 8)
+  fromUserId        String?
+  fromPayrollUserId String?
+  claimed           Boolean          @default(false)
+  pendingAccountId  String?
+  pendingAccount    PendingAccount?  @relation(fields: [pendingAccountId], references: [id], onDelete: Cascade)
+  userId            String?
+  user              User?            @relation(fields: [userId], references: [id])
+  createdAt         DateTime         @default(now())
+  claimedAt         DateTime?
+  transactionType   TransactionType?
+  payrollItemId     String?
+  claimableAt       DateTime?
+  transactionId     String?
+  transaction       Transaction?     @relation(fields: [transactionId], references: [id])
+}
+
+enum PayrollStatus {
+  CREATED
+  PROCESSING
+  COMPLETED
+  PARTIALLY_COMPLETED
+  FAILED
+}
+
+model Payroll {
+  id            String        @id @default(uuid())
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
+  totalAmount   Decimal       @db.Decimal(35, 8)
+  totalPayments Int
+  status        PayrollStatus @default(CREATED)
+  createdAt     DateTime      @default(now())
+  scheduledAt   DateTime?
+  finishedAt    DateTime?
+  payrollItems  PayrollItem[]
+  payrollUserId String?
+  payrollUser   PayrollUser?  @relation(fields: [payrollUserId], references: [id])
+}
+
+enum PayrollItemStatus {
+  CREATED
+  PROCESSING
+  COMPLETED
+  NOT_USER_FOUND
+  FAILED
+}
+
+model PayrollItem {
+  id          String            @id @default(uuid())
+  payrollId   String
+  payroll     Payroll           @relation(fields: [payrollId], references: [id])
+  userId      String?
+  user        User?             @relation(fields: [userId], references: [id])
+  amount      Decimal           @db.Decimal(35, 8)
+  email       String
+  status      PayrollItemStatus @default(CREATED)
+  createdAt   DateTime          @default(now())
+  extraData   String?
+  completedAt DateTime?
+}
+
+model NonCustodialStellarWallet {
+  id            String    @id @default(uuid())
+  publicKey     String    @unique
+  deviceKey     String    @unique
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime? @updatedAt
+  lastScreening DateTime?
+  lastCursor    String?
+}
+
+model CustodialAccountsMigrated {
+  id        String  @id @default(uuid())
+  publicKey String  @unique
+  userId    String  @unique
+  sweeped   Boolean @default(false)
+}
+
+model Pin {
+  id        String    @id @default(uuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id])
+  pin       String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model Address {
+  id             String    @id @default(uuid())
+  customerId     String    @unique
+  customer       Customer  @relation(fields: [customerId], references: [id])
+  fullAddress    String?
+  streetName     String
+  streetNumber   String?
+  housingDetails String
+  neighborhood   String?
+  postalCode     String
+  city           String
+  state          String
+  country        String
+  stateCode      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+}
+
+enum UsdBankAccountStatus {
+  ACTIVE
+  DEACTIVE
+}
+
+model UsdBankAccount {
+  id                 String               @id @default(uuid())
+  sardineId          String
+  userId             String               @unique
+  user               User                 @relation(fields: [userId], references: [id])
+  accountHolderName  String?
+  routingNumber      String
+  accountNumber      String
+  type               String?
+  sponsorBankName    String?
+  sponsorBankAddress String?
+  status             UsdBankAccountStatus @default(ACTIVE)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime?            @updatedAt
+  transactions       Transaction[]
+}
+
+enum PayIdStatus {
+  ACTIVE
+  BLOCKED
+}
+
+model PayId {
+  id        String       @id @default(uuid())
+  userId    String       @unique
+  user      User         @relation(fields: [userId], references: [id])
+  payId     String       @unique
+  createdAt DateTime     @default(now())
+  status    PayIdStatus? @default(ACTIVE)
+  updatedAt DateTime?    @updatedAt
+}
+
+model PaymentLinkPaymentIntent {
+  id              String    @id @default(uuid())
+  invoiceId       String
+  invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  providerOrderId String?
+  provider        String?
+  phoneNumber     String?
+  amount          Decimal?  @db.Decimal(35, 8)
+  status          String    @default("CREATED")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime? @updatedAt
+}
+
+model GetFrontConnection {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id])
+  provider          String    @default("BINANCE")
+  prividerAccountId String
+  authToken         String
+  refreshToken      String
+  getFrontId        String    @unique
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime? @updatedAt
+}
+
+model PayrollUser {
+  id                    String                 @id @default(uuid())
+  email                 String                 @unique
+  cognitoId             String                 @unique
+  createdAt             DateTime               @default(now())
+  lastSignin            DateTime?
+  updatedAt             DateTime?              @updatedAt
+  country               String?
+  avatarUrl             String?
+  payrollCustomer       PayrollCustomer?
+  payrollStellarAccount PayrollStellarAccount?
+  Payroll               Payroll[]
+}
+
+model PayrollCustomer {
+  id             String      @id @default(uuid())
+  payrollUserId  String      @unique
+  payrollUser    PayrollUser @relation(fields: [payrollUserId], references: [id])
+  name           String
+  documentNumber String?
+  address        String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime?   @updatedAt
+}
+
+model PayrollStellarAccount {
+  id                    String      @id @default(uuid())
+  payrollUserId         String      @unique
+  payrollUser           PayrollUser @relation(fields: [payrollUserId], references: [id])
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime?   @updatedAt
+  stellarDepositAddress String
+  stellarDepositMemo    String
+  balance               Decimal     @default(0) @db.Decimal(35, 8)
+}
+
+model CustomerOccupation {
+  id                 String   @id @default(uuid())
+  customerId         String   @unique
+  customer           Customer @relation(fields: [customerId], references: [id])
+  economicalActivity String
+  economicalArea     String
+  sourceOfFunds      String
+  monthlyIncome      String?
+  createdAt          DateTime @default(now())
+}
+
+enum AccountLimitPeriod {
+  ONE_TIME
+  DAILY
+  MONTHLY
+  YEARLY
+}
+
+model AccountLimits {
+  id            String             @id @default(uuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id])
+  paymentMethod PaymentMethod
+  amount        Decimal            @default(100) @db.Decimal(35, 8)
+  currency      String             @default("USD")
+  unlimited     Boolean            @default(false)
+  period        AccountLimitPeriod
+  createdAt     DateTime           @default(now())
+}
+
+model ProofOfResidency {
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id])
+  address      String?
+  fullName     String?
+  resourceUrl  String
+  status       String
+  provider     String?
+  emissionDate DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime? @updatedAt
+  migrated     Boolean?
+}
+
+enum CardType {
+  VIRTUAL
+  PHYSICAL
+}
+
+enum CardStatus {
+  ISSUED_INACTIVE
+  ACTIVE
+  LOST
+  STOLEN_CARD
+  WITHDRAWALS
+  CLOSED
+  LOST_NOT_CAP
+  STOLEN_NOT_CAP
+  INACTIVE
+  CARD_REISSUE
+  BLOCK_PER_FRAUD
+}
+
+model Card {
+  id                         String                      @id @default(uuid())
+  customerId                 String
+  customer                   Customer                    @relation(fields: [customerId], references: [id])
+  cardReferenceId            String                      @unique
+  cardType                   CardType                    @default(VIRTUAL)
+  nameOnCard                 String
+  cardholderId               String                      @unique
+  batchId                    String
+  banTransferTransactionId   String                      @unique
+  last4                      String?
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime?                   @updatedAt
+  status                     CardStatus?                 @default(ISSUED_INACTIVE)
+  hasBeenCharged             Boolean                     @default(false)
+  CardDepositFireblocksVault CardDepositFireblocksVault?
+}
+
+enum WisePaymentLinkStatus {
+  REQUESTED
+  ASSIGNED
+  REFERENCE_NUMBER_ASSIGNED
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+model WisePaymentLink {
+  id              String                @id @default(uuid())
+  userId          String
+  user            User                  @relation(fields: [userId], references: [id])
+  amount          Decimal
+  url             String?
+  transactionId   String
+  transaction     Transaction           @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  status          WisePaymentLinkStatus @default(REQUESTED)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime?             @updatedAt
+  referenceNumber String?
+}
+
+enum Blockchain {
+  STELLAR
+  POLYGON
+  TRON
+  BITCOIN
+  ETHEREUM
+  SOLANA
+}
+
+model CryptoAddress {
+  id            String     @id @default(uuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  address       String
+  memo          String?
+  blockchain    Blockchain
+  name          String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime?  @default(now())
+  lastScreening DateTime?
+}
+
+model DepositPaymentMethod {
+  id            String   @id @default(uuid())
+  label         String
+  logoAssetPath String?
+  logoUrl       String?
+  subtitle      String
+  value         String
+  icon          String?
+  disabled      Boolean  @default(false)
+  isCommon      Boolean  @default(false)
+  country       String?
+  isDynamic     Boolean? @default(false)
+  order         Int      @default(0)
+  deepLink      String?
+}
+
+enum ContractType {
+  HOURLY
+  FIXED
+}
+
+model ContractMilestone {
+  id               String          @id @default(uuid())
+  name             String          @unique
+  description      String?
+  amount           Decimal         @db.Decimal(35, 8)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime?       @updatedAt
+  DirectContract   DirectContract? @relation(fields: [directContractId], references: [id])
+  directContractId String?
+}
+
+model DirectContract {
+  id                   String              @id @default(uuid())
+  name                 String              @unique
+  userId               String
+  user                 User                @relation(fields: [userId], references: [id])
+  description          String
+  clientEmail          String
+  contractType         ContractType
+  hourlyRate           Decimal?            @db.Decimal(35, 8)
+  hoursPerWeek         Int?
+  endDate              DateTime?
+  fixedPrice           Decimal?
+  notes                String?
+  milestones           ContractMilestone[]
+  smartContractAddress String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime?           @updatedAt
+}
+
+model UsdBankAccountRequest {
+  id                String                       @id @default(uuid())
+  userId            String                       @unique
+  user              User                         @relation(fields: [userId], references: [id])
+  status            UsdBankAccountRequestStatus?
+  error             String?
+  tosSessionToken   String?
+  signedAgreementId String?
+  signedAgreementAt DateTime?
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime?                    @updatedAt
+  intendsOfUse      String?
+  reprocessed       Boolean                      @default(false)
+}
+
+model BridgeCustomer {
+  id                   String                @id @default(uuid())
+  userId               String                @unique
+  user                 User                  @relation(fields: [userId], references: [id])
+  bridgeCustomerId     String?               @unique
+  bridgeKycStatus      String
+  hasSepaEnabled       Boolean?              @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime?             @updatedAt
+  bridgeSOFQuestionary BridgeSOFQuestionary?
+}
+
+model UsdVirtualBankAccount {
+  id                    String        @id @default(uuid())
+  bridgeId              String
+  bridgeCustomerId      String
+  userId                String        @unique
+  user                  User          @relation(fields: [userId], references: [id])
+  accountHolderName     String
+  routingNumber         String
+  accountNumber         String
+  type                  String
+  sponsorBankName       String
+  sponsorBankAddress    String
+  depositMemo           String?
+  destinationBlockchain String?
+  destinationAddress    String?
+  destinationMemo       String?
+  depositFee            Decimal       @default(0)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime?     @updatedAt
+  transactions          Transaction[]
+  status                String?       @default("activated")
+}
+
+model PixPayment {
+  id            String      @id @default(uuid())
+  amountInReais Decimal
+  sqalaId       String      @unique
+  sqalaCode     String?     @unique
+  transactionId String      @unique
+  status        String
+  recipientName String?
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  createdAt     DateTime    @default(now())
+  processedAt   DateTime?
+}
+
+model ShipmentAddress {
+  id                 String    @id @default(uuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+  contactName        String
+  contactPhoneNumber String
+  contactEmail       String
+  address            String
+  city               String
+  state              String
+  postalCode         String
+  country            String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime? @updatedAt
+  shipment           Shipment?
+}
+
+model Shipment {
+  id                 String          @id @default(uuid())
+  userId             String
+  user               User            @relation(fields: [userId], references: [id])
+  trakckingUrl       String?
+  providerShipmentId String
+  deliveryState      String?
+  pickupState        String?
+  shipmentAddressId  String          @unique
+  shipmentAddress    ShipmentAddress @relation(fields: [shipmentAddressId], references: [id])
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime?       @updatedAt
+}
+
+model RainCardCustomer {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id])
+  rainUserId            String
+  rainStatus            String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime? @updatedAt
+  adminAddress          String?
+  extraVerificationLink String?
+}
+
+model RainCard {
+  id                         String                       @id @default(uuid())
+  rainCardId                 String                       @unique
+  userId                     String
+  user                       User                         @relation(fields: [userId], references: [id])
+  last4                      String
+  expirationMonth            String
+  expirationYear             String
+  type                       String
+  status                     String
+  limitAmount                Decimal?
+  limitPeriod                String?
+  rainUserId                 String?
+  rainCompanyId              String?
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime?                    @updatedAt
+  CardDepositFireblocksVault CardDepositFireblocksVault[]
+  hasPin                     Boolean?                     @default(false)
+  hasATMWithdrawalActive     Boolean?                     @default(false)
+  pinUpdatedAt               DateTime?
+  bulkShippingGroupId        String?
+  bulkShippingGroup          BulkShippingGroup?           @relation(fields: [bulkShippingGroupId], references: [id])
+  physicalCardRequest        PhysicalCardRequest?
+}
+
+model SavingCircle {
+  id                  String                 @id @default(uuid())
+  ownerId             String                 @unique
+  owner               User                   @relation(fields: [ownerId], references: [id])
+  circleName          String?
+  circleStatus        String?
+  maxUsers            Int?
+  circleAmountPerUser Decimal?
+  contractAddress     String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime?              @updatedAt
+  finishAt            DateTime?
+  usersInSavingCircle UsersOnSavingCircles[]
+}
+
+model UsersOnSavingCircles {
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  savingCircle   SavingCircle @relation(fields: [savingCircleId], references: [id])
+  savingCircleId String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime?    @updatedAt
+
+  @@id([userId, savingCircleId])
+}
+
+model CardDepositFireblocksVault {
+  id                    String    @id @default(uuid())
+  cardId                String?   @unique
+  card                  Card?     @relation(fields: [cardId], references: [id])
+  rainCardId            String?   @unique
+  rainCard              RainCard? @relation(fields: [rainCardId], references: [id])
+  fireblocksVaultId     String?   @unique
+  active                Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime? @updatedAt
+  stellarDepositAddress String?
+  stellarDepositMemo    String?
+}
+
+model KYCDocumentMedia {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  documentType String
+  bucketUrl    String    @unique
+  mediaType    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime? @updatedAt
+}
+
+enum MoneyFlowSourceType {
+  USD_BANK_ACCOUNT
+  PAYROLL
+  ALL
+}
+
+enum MoneyFlowDestinationType {
+  BANK_ACCOUNT
+  CRYPTO_WALLET
+  CARD
+  USD_MERU_ACCOUNT
+  USER_PAYMENT
+  UTILITY_BILL_PAYMENT
+}
+
+model MoneyFlowSource {
+  id         String              @id @default(uuid())
+  sourceId   String
+  sourceType MoneyFlowSourceType
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime?           @updatedAt
+  moneyFlow  MoneyFlow?
+}
+
+model MoneyFlowDestination {
+  id                      String                   @id @default(uuid())
+  destinationId           String
+  destinationType         MoneyFlowDestinationType
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime?                @updatedAt
+  percentage              Decimal?
+  amount                  Decimal?
+  moneyFlow               MoneyFlow?               @relation(fields: [moneyFlowId], references: [id])
+  moneyFlowId             String?
+  moneyFlowExecutionSteps MoneyFlowExecutionStep[]
+}
+
+model MoneyFlow {
+  id                  String                 @id @default(uuid())
+  name                String
+  userId              String
+  user                User                   @relation(fields: [userId], references: [id])
+  sourceId            String                 @unique
+  source              MoneyFlowSource        @relation(fields: [sourceId], references: [id])
+  destinations        MoneyFlowDestination[]
+  isActivated         Boolean                @default(true)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime?              @updatedAt
+  lastRunAt           DateTime?
+  moneyFlowExecutions MoneyFlowExecution[]
+}
+
+enum MoneyFlowExecutionStatus {
+  CREATED
+  PROCESSING
+  EXECUTED
+  FAILED
+}
+
+model MoneyFlowExecution {
+  id                      String                   @id @default(uuid())
+  moneyFlowId             String
+  moneyFlow               MoneyFlow                @relation(fields: [moneyFlowId], references: [id])
+  executedAt              DateTime                 @default(now())
+  status                  MoneyFlowExecutionStatus @default(CREATED)
+  triggerTransactionId    String                   @unique
+  moneyFlowExecutionSteps MoneyFlowExecutionStep[]
+}
+
+enum MoneyFlowExecutionStepStatus {
+  CREATED
+  PROCESSING
+  TRIGGERED
+  EXECUTED
+  FAILED
+}
+
+model MoneyFlowExecutionStep {
+  id                     String                       @id @default(uuid())
+  moneyFlowExecutionId   String
+  moneyFlowExecution     MoneyFlowExecution           @relation(fields: [moneyFlowExecutionId], references: [id], onDelete: Cascade)
+  moneyFlowDestinationId String
+  moneyFlowDestination   MoneyFlowDestination         @relation(fields: [moneyFlowDestinationId], references: [id])
+  amount                 Decimal
+  status                 MoneyFlowExecutionStepStatus @default(CREATED)
+  createdAt              DateTime                     @default(now())
+  updatedAt              DateTime?                    @updatedAt
+  transactionId          String?                      @unique
+}
+
+model CardRequest {
+  id                     String    @id @default(uuid())
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id])
+  status                 String
+  provider               String
+  type                   String
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime? @updatedAt
+  ipAddress              String?
+  iovationBlackbox       String?
+  intendsOfUse           String?
+  monthlyEstimatedAmount String?
+  errorLog               String?
+}
+
+model PortalUser {
+  id String @id @default(uuid()) // (String) A unique identifier for each backup share
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id]) // (User) A relation field that links to the corresponding user in the User model.
+
+  portalClientApiKey          String?                      @unique // (String) The unique Client API Key assigned to the user.     
+  portalClientId              String?                      @unique // (String) The unique identifier for the client that Portal uses.
+  portalUserBackupShares      PortalUserBackupShare[] // (UserBackupShare[]) A list of the user backup shares related to the user.
+  portalCustodianBackupShares PortalCustodianBackupShare[] // (CustodianBackupShare[]) A list of the custodian backup shares related to the user.
+
+  eip155Address  String? // (String) The EIP-155 address of the user.
+  solanaAddress  String? // (String) The Solana address of the user.
+  bitcoinAddress String? // (String) The Bitcoin address of the user.
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model PortalUserBackupShare {
+  backupMethod String   @default("UNKNOWN") // (String) The method used for the backup. Defaults to "UNKNOWN" if not specified.
+  createdAt    DateTime @default(now()) // (DateTime) The timestamp when the backup share was created.
+  id           String   @id @default(uuid()) // (String) A unique identifier for each backup share
+  cipherText   String // (String) The encrypted backup share data.
+  portalUserId String // (Int) The identifier of the user to whom the backup share belongs.
+
+  portalUser PortalUser @relation(fields: [portalUserId], references: [id]) // (User) A relation field that links to the corresponding user in the User model.
+
+  @@unique([portalUserId, backupMethod]) // A unique constraint ensuring that each user has only one backup share per method.
+}
+
+model PortalCustodianBackupShare {
+  backupMethod String   @default("UNKNOWN") // (String) The method used for the backup. Defaults to "UNKNOWN" if not specified.
+  createdAt    DateTime @default(now()) // (DateTime) The timestamp when the backup share was created.
+  id           String   @id @default(uuid()) // (String) A unique identifier for each backup share
+  share        String // (String) The raw backup share data.
+  portalUserId String // (String) The identifier of the user to whom the backup share belongs.
+
+  portalUser PortalUser @relation(fields: [portalUserId], references: [id]) // (User) A relation field that links to the corresponding user in the User model.
+
+  @@unique([portalUserId, backupMethod]) // A unique constraint ensuring that each user has only one backup share per method.
+}
+
+model MeruTag {
+  id        String    @id @default(uuid())
+  tag       String    @unique
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model ReferralRegistration {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  referralCode String
+  referralId   String
+  referral     Referral  @relation(fields: [referralId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime? @updatedAt
+}
+
+model LiquidityTransaction {
+  id                            String    @id @default(uuid())
+  transactionId                 String?   @unique
+  amount                        Decimal   @db.Decimal(35, 8)
+  destAmount                    Decimal?  @db.Decimal(35, 8)
+  fromToken                     String?
+  fromBlockchain                String?
+  toToken                       String?
+  toBlockchain                  String?
+  txHash                        String?
+  fireblocksTransactionId       String?   @unique
+  returnFireblocksTransactionId String?   @unique
+  returnTxHash                  String?
+  destinationFireblocksVaultId  String?
+  destinationAddress            String?
+  destinationMemo               String?
+  status                        String
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime? @updatedAt
+}
+
+model TwoFactorAuth {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id])
+  twilioSid        String
+  twilioAccountSid String
+  twilioEntitySId  String
+  twilioServiceSid String
+  twilioStatus     String
+  friendlyName     String
+  factorType       String    @default("topt")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime? @updatedAt
+  disabledAt       DateTime?
+}
+
+model Article {
+  id                  String   @id @default(uuid())
+  title               String
+  subtitle            String
+  deepLink            String?
+  iconUrl             String
+  iconBackgroundColor String
+  backgroundColor     String
+  buttonText          String
+  share               Share?
+  isActivated         Boolean  @default(true)
+  createdAt           DateTime @default(now())
+}
+
+model Share {
+  id              String  @id @default(uuid())
+  shareButtonText String?
+  title           String
+  description     String
+  articleId       String  @unique
+  article         Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model CardTransactionDispute {
+  id                        String       @id @default(uuid())
+  transactionId             String       @unique
+  transaction               Transaction  @relation(fields: [transactionId], references: [id])
+  userId                    String
+  user                      User         @relation(fields: [userId], references: [id])
+  cardProvider              CardProvider
+  cardId                    String
+  disputeId                 String?      @unique
+  cardProviderTransactionId String?
+  disputeStatus             String
+  textEvidence              String?
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime?    @updatedAt
+  resolvedAt                DateTime?
+}
+
+enum BoYapePaymentStatus {
+  CREATED
+  PENDING_CONFIRMATION
+  EXPIRED
+  CANCELLED
+  PAID
+}
+
+model BoYapePayment {
+  id                    String              @id @default(uuid())
+  transactionId         String              @unique
+  transaction           Transaction         @relation(fields: [transactionId], references: [id])
+  transactionNumber     String
+  transactionAuthNumber String
+  status                BoYapePaymentStatus @default(PENDING_CONFIRMATION)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime?           @updatedAt
+}
+
+enum VEDocumentType {
+  V
+  E
+  J
+}
+
+model PagoMovil {
+  id                        String         @id @default(uuid())
+  phoneNumber               String
+  beneficiaryName           String
+  beneficiaryDocumentType   VEDocumentType
+  beneficiaryDocumentNumber String
+  bankCode                  String
+  userId                    String
+  alias                     String
+  user                      User           @relation(fields: [userId], references: [id])
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime?      @updatedAt
+}
+
+model KoyweBankAccount {
+  id                 String      @id @default(uuid())
+  koyweBankAccountId String      @unique
+  bankAccountId      String      @unique
+  bankAccount        BankAccount @relation(fields: [bankAccountId], references: [id])
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime?   @updatedAt
+}
+
+model MantecaUser {
+  id                  String               @id @default(uuid())
+  userId              String               @unique
+  user                User                 @relation(fields: [userId], references: [id])
+  mantecaUserId       String               @unique
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime?            @updatedAt
+  mantecaKycStatus    String?
+  mantecaBankAccounts MantecaBankAccount[]
+}
+
+enum MantecaBankAccountSatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  DELETED
+}
+
+model MantecaBankAccount {
+  id                   String                  @id @default(uuid())
+  mantecaUserId        String
+  mantecaUser          MantecaUser             @relation(fields: [mantecaUserId], references: [id])
+  userId               String
+  user                 User                    @relation(fields: [userId], references: [id])
+  beneficiaryName      String?
+  description          String?
+  documentNumber       String?
+  cbu                  String
+  actualCbu            String?
+  bankName             String?
+  bankCode             String?
+  accountType          String?
+  mantecaBankAccountId String?                 @unique
+  bankAccountId        String?                 @unique
+  bankAccount          BankAccount?            @relation(fields: [bankAccountId], references: [id])
+  status               MantecaBankAccountSatus @default(ACTIVE)
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime?               @updatedAt
+  transactions         Transaction[]
+}
+
+model ComplianceRequirement {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  isCompleted Boolean   @default(false)
+  requirement String
+  process     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  completedAt DateTime?
+}
+
+model IBANBankAccountWaitingList {
+  id         String    @id @default(uuid())
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id])
+  position   Int       @default(0)
+  released   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  releasedAt DateTime?
+}
+
+model SolfinCardWaitingList {
+  id         String    @id @default(uuid())
+  userId     String    @unique
+  position   Int       @default(0)
+  released   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  releasedAt DateTime?
+}
+
+model RainPhysicalCardWaitingList {
+  id         String    @id @default(uuid())
+  userId     String    @unique
+  position   Int       @default(0)
+  released   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+  releasedAt DateTime?
+}
+
+model IbanVirtualAccount {
+  id                    String        @id @default(uuid())
+  bridgeId              String
+  bridgeCustomerId      String
+  userId                String        @unique
+  user                  User          @relation(fields: [userId], references: [id])
+  accountHolderName     String
+  iban                  String
+  bic                   String
+  sponsorBankName       String
+  sponsorBankAddress    String
+  depositMemo           String?
+  destinationBlockchain String?
+  destinationAddress    String?
+  destinationMemo       String?
+  depositFee            Decimal       @default(0)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime?     @updatedAt
+  transactions          Transaction[]
+  status                String?       @default("activated")
+}
+
+model BridgeSOFQuestionary {
+  id                      String         @id @default(uuid())
+  bridgeCustomerId        String         @unique
+  bridgeCustomer          BridgeCustomer @relation(fields: [bridgeCustomerId], references: [id])
+  employmentStatus        String
+  expectedMonthlyPayments String
+  actingAsIntermediary    Boolean
+  mostRecentOccupation    String
+  primaryPurpose          String
+  primaryPurposeOther     String?
+  sourceOfFunds           String
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime?      @updatedAt
+}
+
+enum IbanAccountRequestStatus {
+  CREATED
+  REQUESTED
+  PROOF_OF_ADDRESS_REJECTED
+  REJECTED
+}
+
+model IbanAccountRequest {
+  id        String                    @id @default(uuid())
+  userId    String                    @unique
+  user      User                      @relation(fields: [userId], references: [id])
+  status    IbanAccountRequestStatus?
+  error     String?
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime?                 @updatedAt
+}
+
+model PSEPayment {
+  id                String      @id @default(uuid())
+  providerId        String      @unique
+  amount            Decimal     @db.Decimal(35, 8)
+  bankCode          String
+  transactionId     String      @unique
+  transaction       Transaction @relation(fields: [transactionId], references: [id])
+  userId            String
+  user              User        @relation(fields: [userId], references: [id])
+  transactionStatus String?
+  status            String
+  cus               String      @unique
+  bankName          String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime?   @updatedAt
+}
+
+model KoyweAccount {
+  id         String    @id @default(uuid())
+  koyweEmail String    @unique
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+}
+
+enum BlindpayUsBankAccountRequestStatus {
+  REQUESTED
+  CUSTOMER_CREATED
+  IN_PROGRESS
+  CUSTOMER_APPROVED
+  CUSTOMER_REJECTED
+  WALLET_CREATED
+  BANK_ACCOUNT_CREATED
+  TOS_ACCEPTED
+  FAILED
+  WRONG_DOCUMENT
+}
+
+model BlindpayUSBankAccountRequest {
+  id              String                              @id @default(uuid())
+  userId          String                              @unique
+  user            User                                @relation(fields: [userId], references: [id])
+  status          BlindpayUsBankAccountRequestStatus?
+  tosSessionToken String?
+  createdAt       DateTime                            @default(now())
+  updatedAt       DateTime?                           @updatedAt
+}
+
+model BlindpayCustomer {
+  id                 String    @id @default(uuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id])
+  blindpayCustomerId String?   @unique
+  blindpayKycStatus  String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime? @updatedAt
+}
+
+model BlindpayWallet {
+  id                 String    @id @default(uuid())
+  blindpayCustomerId String
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+  blindpayWalletId   String?   @unique
+  network            String
+  address            String
+  memo               String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime? @updatedAt
+}
+
+model BlindpayVirtualBankAccount {
+  id                        String        @id @default(uuid())
+  userId                    String
+  user                      User          @relation(fields: [userId], references: [id])
+  blindpayVBAId             String?       @unique
+  token                     String // "USDC" | "USDT" | "USDB" | "USDX" | "XLM"
+  blockchainWalletId        String
+  accountType               String
+  usACHRoutingNumber        String?
+  usACHAccountNumber        String?
+  usWireRoutingNumber       String?
+  usWireAccountNumber       String?
+  usRTPRoutingNumber        String?
+  usRTPAccountNumber        String?
+  swiftBicCode              String?
+  beneficiaryName           String
+  beneficiaryAddressLine1   String
+  beneficiaryAddressLine2   String?
+  receivingBankName         String
+  receivingBankAddressLine1 String
+  receivingBankAddressLine2 String?
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime?     @updatedAt
+  transactions              Transaction[]
+}
+
+enum PhysicalCardRequestStatus {
+  PENDING
+  CARD_CREATED
+  PROCESSING
+  SHIPPING_CREATED
+  SHIPPING_LABEL_CREATED
+  SHIPPING_LABEL_CREATION_FAILED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  FAILED
+}
+
+model PhysicalCardRequest {
+  id             String                    @id @default(uuid())
+  userId         String
+  user           User                      @relation(fields: [userId], references: [id])
+  status         PhysicalCardRequestStatus @default(PENDING)
+  requestedAt    DateTime                  @default(now())
+  shippedAt      DateTime?
+  trackingNumber String?
+  shippingId     String?
+  courierId      String?
+  shipping       ShippingInfo?             @relation(fields: [shippingId], references: [id])
+  errorMessage   String?
+  cardId         String?                   @unique
+  card           RainCard?                 @relation(fields: [cardId], references: [id])
+  deliveredAt    DateTime?
+
+  easyshipOrder EasyshipOrder?
+}
+
+model ShippingInfo {
+  id                   String                @id @default(cuid())
+  userId               String
+  user                 User                  @relation(fields: [userId], references: [id])
+  fullName             String
+  addressLine1         String
+  addressLine2         String?
+  city                 String
+  state                String
+  postalCode           String
+  country              String
+  phoneNumber          String
+  email                String?
+  physicalCardRequests PhysicalCardRequest[]
+}
+
+model EasyshipOrder {
+  id              String              @id @default(cuid())
+  userId          String
+  user            User                @relation(fields: [userId], references: [id])
+  cardRequestId   String              @unique
+  cardRequest     PhysicalCardRequest @relation(fields: [cardRequestId], references: [id])
+  easyshipOrderId String // Easyship's external ID
+  shippingPrice   Decimal?            @db.Decimal(35, 8)
+  minDeliveryTime Int?
+  maxDeliveryTime Int?
+  labelUrl        String?
+  trackingUrl     String?
+  courierId       String?
+  courierName     String?
+  easyshipBatchId String?
+  easyshipBatch   EasyShipBatch?      @relation(fields: [easyshipBatchId], references: [id])
+  status          String
+  labelStatus     String?
+  errors          Json[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model EasyShipBatch {
+  id        String          @id @default(cuid())
+  batchId   String          @unique
+  status    String
+  type      String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime?       @updatedAt
+  orders    EasyshipOrder[]
+}
+
+enum ArQrCodePaymentStatus {
+  CREATED
+  STARTING
+  ACTIVE
+  WAITING
+  PAUSED
+  FAILED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+model ArQrCodePayment {
+  id                 String                @id @default(uuid())
+  userId             String
+  user               User                  @relation(fields: [userId], references: [id])
+  transactionId      String                @unique
+  transaction        Transaction           @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  beneficiaryLegalId String?
+  beneficiaryName    String?
+  qrCode             String
+  amountInArs        Decimal               @db.Decimal(35, 8)
+  lockCodeId         String                @unique
+  status             ArQrCodePaymentStatus
+  syntheticId        String?               @unique // Optional synthetic ID for tracking purposes
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime?             @updatedAt
+  expiredAt          DateTime? // Optional field to track expiration time of the QR code
+}
+
+model BulkShippingGroup {
+  id                    String                   @id @default(uuid())
+  rainBulkShippingId    String                   @unique
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime?                @updatedAt
+  bulkShippingAddressId String?
+  bulkshippingAddress   BulkShippingAddressInfo? @relation(fields: [bulkShippingAddressId], references: [id])
+  cards                 RainCard[]
+}
+
+model BulkShippingAddressInfo {
+  id                        String              @id @default(cuid())
+  recipientFirstName        String
+  recipientLastName         String
+  recipientPhoneCountryCode String
+  recipientPhoneNumber      String
+  addressLine1              String
+  addressLine2              String?
+  city                      String
+  state                     String
+  postalCode                String
+  country                   String
+  phoneNumber               String
+  BulkShippingGroup         BulkShippingGroup[]
+}
