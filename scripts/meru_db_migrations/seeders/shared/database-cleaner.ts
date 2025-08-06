@@ -38,6 +38,8 @@ export class DatabaseCleaner {
             await this.cleanTableIfNeeded('Transaction');
             await this.cleanTableIfNeeded('BankAccount');
             await this.cleanTableIfNeeded('Customer');
+            await this.cleanTableIfNeeded('Device');
+            await this.cleanTableIfNeeded('KYCCustomer');
             await this.cleanTableIfNeeded('StellarAccount');
             
             // Clean parent table last
