@@ -93,7 +93,7 @@ export class DatabaseWriter {
 
     switch (fieldInfo.type) {
       case 'Boolean':
-        return value.toLowerCase() === 'true' || value === '1';
+        return value.toLowerCase() == 'true' || value == '1';
       
       case 'Int':
         return parseInt(value, 10);
@@ -155,17 +155,13 @@ export class DatabaseWriter {
         
         for (const fieldInfo of modelInfo.fields) {
           const csvValue = row[fieldInfo.name];
-          
-          if (csvValue !== undefined) {
-            const convertedValue = this.convertValue(csvValue, fieldInfo);
-            if (convertedValue !== undefined) {
-              processed[fieldInfo.name] = convertedValue;
-            }
-          }
+          const convertedValue = this.convertValue(csvValue, fieldInfo);
+            processed[fieldInfo.name] = convertedValue;
         }
         
         return processed; // Return the processed object
       });
+
       await model.createMany({
         data: processedData,
         skipDuplicates: true
