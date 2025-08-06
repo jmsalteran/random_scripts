@@ -11,7 +11,6 @@ export class DevicesSeeder {
 
     async generateAndSaveDevices(users: any[]) {
         try {
-            console.log(`Generating devices for ${users.length} users...`);
             
             const devices = [];
             
@@ -29,13 +28,11 @@ export class DevicesSeeder {
             }
 
             // Save devices to database
-            console.log(`Saving ${devices.length} devices to database...`);
             const savedDevices = await this.prisma.device.createMany({
                 data: devices,
                 skipDuplicates: true
             });
 
-            console.log(`Successfully created ${savedDevices.count} devices`);
             return devices;
         } catch (error) {
             console.error('Error generating and saving devices:', error);
@@ -61,10 +58,8 @@ export class DevicesSeeder {
 
     async checkDevices(devices: any[]) {
         try {
-            console.log('Checking devices in database...');
             
             const deviceCount = await this.prisma.device.count();
-            console.log(`Total devices in database: ${deviceCount}`);
             
             // Verify that each user has exactly one device
             const usersWithDevices = await this.prisma.user.findMany({
@@ -76,8 +71,6 @@ export class DevicesSeeder {
             const usersWithMultipleDevices = usersWithDevices.filter(user => user.devices.length > 1);
             const usersWithoutDevices = usersWithDevices.filter(user => user.devices.length === 0);
 
-            console.log(`Users with multiple devices: ${usersWithMultipleDevices.length}`);
-            console.log(`Users without devices: ${usersWithoutDevices.length}`);
 
             if (usersWithMultipleDevices.length > 0) {
                 console.warn('Warning: Some users have multiple devices');

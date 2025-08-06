@@ -21,7 +21,6 @@ export class UsersSeeder {
 
     async generateAndSaveUsers(numUsers: number = 5000) {
         try {
-            console.log(`Generating ${numUsers} users...`);
             
             // Generate user data
             const users = [];
@@ -108,7 +107,6 @@ export class UsersSeeder {
                 skipDuplicates: true
             });
             
-            console.log(`Successfully created ${users.length} users in database`);
             return users;
         } catch (error) {
             console.error('Error generating and saving users:', error);

@@ -14,8 +14,6 @@ export class CustomersSeeder {
 
     async generateAndSaveCustomers(users: any[]) {
         try {
-            console.log(`Generating customers for ${users.length} users...`);
-            
             // Generate customer data for each user
             const customers = [];
             const now = new Date().toISOString();
@@ -49,7 +47,6 @@ export class CustomersSeeder {
                 skipDuplicates: true
             });
             
-            console.log(`Successfully created ${customers.length} customers in database`);
             return customers;
         } catch (error) {
             console.error('Error generating and saving customers:', error);

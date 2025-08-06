@@ -11,7 +11,6 @@ export class StellarAccountsSeeder {
 
     async generateAndSaveStellarAccounts(users: any[]) {
         try {
-            console.log(`Generating stellar accounts for ${users.length} users...`);
             
             // Generate stellar account data for each user
             const stellarAccounts = [];
@@ -38,7 +37,6 @@ export class StellarAccountsSeeder {
                 skipDuplicates: true
             });
             
-            console.log(`Successfully created ${stellarAccounts.length} stellar accounts in database`);
             return stellarAccounts;
         } catch (error) {
             console.error('Error generating and saving stellar accounts:', error);

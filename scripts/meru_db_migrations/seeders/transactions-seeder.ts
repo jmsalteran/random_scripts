@@ -20,7 +20,6 @@ export class TransactionsSeeder {
 
     async generateAndSaveTransactions(users: any[]) {
         try {
-            console.log(`Generating transactions for ${users.length} users...`);
             
             // Generate transaction data for each user
             const transactions = [];
@@ -153,7 +152,6 @@ export class TransactionsSeeder {
                 skipDuplicates: true
             });
             
-            console.log(`Successfully created ${transactions.length} transactions in database`);
             return transactions;
         } catch (error) {
             console.error('Error generating and saving transactions:', error);

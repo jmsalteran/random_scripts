@@ -7,6 +7,7 @@ import {
     TransactionsSeeder, 
     DevicesSeeder,
     KYCCustomersSeeder,
+    FireblocksVaultSeeder,
     DatabaseCleaner, 
     CLEAN_BEFORE_SEED 
 } from './seeders';
@@ -20,6 +21,7 @@ export class DatabaseSeeder {
     private transactionsSeeder: TransactionsSeeder;
     private devicesSeeder: DevicesSeeder;
     private kycCustomersSeeder: KYCCustomersSeeder;
+    private fireblocksVaultSeeder: FireblocksVaultSeeder;
     private databaseCleaner: DatabaseCleaner;
 
     constructor() {
@@ -31,14 +33,12 @@ export class DatabaseSeeder {
         this.transactionsSeeder = new TransactionsSeeder(this.prisma);
         this.devicesSeeder = new DevicesSeeder(this.prisma);
         this.kycCustomersSeeder = new KYCCustomersSeeder(this.prisma);
+        this.fireblocksVaultSeeder = new FireblocksVaultSeeder(this.prisma);
         this.databaseCleaner = new DatabaseCleaner(this.prisma);
     }
 
     async executeSeed(numUsers: number = 5000) {
         try {
-            console.log('Starting database seeding process...');
-            console.log(`Configuration: CLEAN_BEFORE_SEED = ${CLEAN_BEFORE_SEED}`);
-            
             // Clean all tables in dependency order first
             await this.databaseCleaner.cleanAllTablesInOrder();
             
@@ -52,6 +52,7 @@ export class DatabaseSeeder {
             await this.bankAccountsSeeder.generateAndSaveBankAccounts(users);
             await this.devicesSeeder.generateAndSaveDevices(users);
             await this.kycCustomersSeeder.generateAndSaveKYCCustomers(users);
+            await this.fireblocksVaultSeeder.generateAndSaveFireblocksVaults(users);
             await this.transactionsSeeder.generateAndSaveTransactions(users);
             
             console.log('Database seeding completed successfully!');

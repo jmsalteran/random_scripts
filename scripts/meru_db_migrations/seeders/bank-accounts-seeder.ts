@@ -15,8 +15,6 @@ export class BankAccountsSeeder {
 
     async generateAndSaveBankAccounts(users: any[]) {
         try {
-            console.log(`Generating bank accounts for ${users.length} users...`);
-            
             // Generate bank account data for each user
             const bankAccounts = [];
             const now = new Date().toISOString();
@@ -60,7 +58,6 @@ export class BankAccountsSeeder {
                 skipDuplicates: true
             });
             
-            console.log(`Successfully created ${bankAccounts.length} bank accounts in database`);
             return bankAccounts;
         } catch (error) {
             console.error('Error generating and saving bank accounts:', error);

@@ -11,13 +11,11 @@ export class DatabaseCleaner {
     private async cleanTableIfNeeded(tableName: string) {
         if (CLEAN_BEFORE_SEED) {
             try {
-                console.log(`Cleaning existing records from ${tableName}...`);
                 
                 // Use Prisma's deleteMany to clean the table
                 const model = this.prisma[tableName as keyof PrismaClient] as any;
                 if (model && typeof model.deleteMany === 'function') {
                     await model.deleteMany({});
-                    console.log(`Successfully cleaned ${tableName}`);
                 } else {
                     console.warn(`Could not clean ${tableName} - deleteMany method not found`);
                 }
@@ -25,14 +23,11 @@ export class DatabaseCleaner {
                 console.error(`Error cleaning ${tableName}:`, error);
                 throw error;
             }
-        } else {
-            console.log(`Skipping cleanup for ${tableName} - adding to existing data`);
         }
     }
 
     async cleanAllTablesInOrder() {
         if (CLEAN_BEFORE_SEED) {
-            console.log('Cleaning all tables in dependency order...');
             
             // Clean dependent tables first (in reverse dependency order)
             await this.cleanTableIfNeeded('Transaction');
@@ -42,10 +37,15 @@ export class DatabaseCleaner {
             await this.cleanTableIfNeeded('KYCCustomer');
             await this.cleanTableIfNeeded('StellarAccount');
             
+            // Clean Fireblocks-related tables (they reference User)
+            await this.cleanTableIfNeeded('FireblocksVault');
+            // await this.cleanTableIfNeeded('PaybisFireblocksVault');
+            // await this.cleanTableIfNeeded('BinanceFireblocksVault');
+            // await this.cleanTableIfNeeded('USDBankAccountFireblocksVault');
+            // await this.cleanTableIfNeeded('CardDepositFireblocksVault');
+            
             // Clean parent table last
             await this.cleanTableIfNeeded('User');
-            
-            console.log('All tables cleaned successfully');
         }
     }
 } 

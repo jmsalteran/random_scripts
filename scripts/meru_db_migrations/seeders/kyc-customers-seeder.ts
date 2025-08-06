@@ -12,11 +12,8 @@ export class KYCCustomersSeeder {
 
     async generateAndSaveKYCCustomers(users: any[]) {
         try {
-            console.log(`Generating KYC customers for users...`);
-            
             // Filter users who have completed KYC (approximately 40% based on the user seeder logic)
             const usersWithKYC = users.filter(user => user.kycCompleted);
-            console.log(`Found ${usersWithKYC.length} users with completed KYC out of ${users.length} total users`);
             
             const kycCustomers = [];
             
@@ -55,13 +52,11 @@ export class KYCCustomersSeeder {
             }
 
             // Save KYC customers to database
-            console.log(`Saving ${kycCustomers.length} KYC customers to database...`);
             const savedKYCCustomers = await this.prisma.kYCCustomer.createMany({
                 data: kycCustomers,
                 skipDuplicates: true
             });
 
-            console.log(`Successfully created ${savedKYCCustomers.count} KYC customers`);
             return kycCustomers;
         } catch (error) {
             console.error('Error generating and saving KYC customers:', error);
