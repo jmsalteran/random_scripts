@@ -4,6 +4,7 @@ import {
     StellarAccountsSeeder, 
     CustomersSeeder, 
     BankAccountsSeeder, 
+    UsdBankAccountsSeeder,
     TransactionsSeeder, 
     DevicesSeeder,
     KYCCustomersSeeder,
@@ -18,6 +19,7 @@ export class DatabaseSeeder {
     private stellarAccountsSeeder: StellarAccountsSeeder;
     private customersSeeder: CustomersSeeder;
     private bankAccountsSeeder: BankAccountsSeeder;
+    private usdBankAccountsSeeder: UsdBankAccountsSeeder;
     private transactionsSeeder: TransactionsSeeder;
     private devicesSeeder: DevicesSeeder;
     private kycCustomersSeeder: KYCCustomersSeeder;
@@ -30,6 +32,7 @@ export class DatabaseSeeder {
         this.stellarAccountsSeeder = new StellarAccountsSeeder(this.prisma);
         this.customersSeeder = new CustomersSeeder(this.prisma);
         this.bankAccountsSeeder = new BankAccountsSeeder(this.prisma);
+        this.usdBankAccountsSeeder = new UsdBankAccountsSeeder(this.prisma);
         this.transactionsSeeder = new TransactionsSeeder(this.prisma);
         this.devicesSeeder = new DevicesSeeder(this.prisma);
         this.kycCustomersSeeder = new KYCCustomersSeeder(this.prisma);
@@ -50,6 +53,7 @@ export class DatabaseSeeder {
             await this.stellarAccountsSeeder.generateAndSaveStellarAccounts(users);
             await this.customersSeeder.generateAndSaveCustomers(users);
             await this.bankAccountsSeeder.generateAndSaveBankAccounts(users);
+            await this.usdBankAccountsSeeder.generateAndSaveUsdBankAccounts(users);
             await this.devicesSeeder.generateAndSaveDevices(users);
             await this.kycCustomersSeeder.generateAndSaveKYCCustomers(users);
             await this.fireblocksVaultSeeder.generateAndSaveFireblocksVaults(users);

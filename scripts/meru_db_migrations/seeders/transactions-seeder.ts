@@ -18,6 +18,16 @@ export class TransactionsSeeder {
         this.prisma = prisma;
     }
 
+    /*
+    RULES:
+    if transacions is BANK_TRANSFER then toBankAccountId is not null
+    if transaction is PSE, CASH or INTERNAL_BALANCE then stellarTransactionId is not null
+    if transaction is CREDIT_CARD then stripePaymentIntentId is not null
+    if transaction is CRYPTO then cryptoHash and cryptoAccountId is not null
+    if transaction is VE_C2P then pagoMovilPhoneNumber is not null
+    do not use transactions of type PAYPAL, YIELD_EARNINGS
+    */
+
     async generateAndSaveTransactions(users: any[]) {
         try {
             

@@ -31,6 +31,7 @@ export class DatabaseCleaner {
             
             // Clean dependent tables first (in reverse dependency order)
             await this.cleanTableIfNeeded('Transaction');
+            await this.cleanTableIfNeeded('UsdBankAccount');
             await this.cleanTableIfNeeded('BankAccount');
             await this.cleanTableIfNeeded('Customer');
             await this.cleanTableIfNeeded('Device');

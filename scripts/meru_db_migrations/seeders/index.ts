@@ -3,6 +3,7 @@ export { UsersSeeder } from './users-seeder';
 export { StellarAccountsSeeder } from './stellar-accounts-seeder';
 export { CustomersSeeder } from './customers-seeder';
 export { BankAccountsSeeder } from './bank-accounts-seeder';
+export { UsdBankAccountsSeeder } from './usd-bank-accounts-seeder';
 export { TransactionsSeeder } from './transactions-seeder';
 export { DevicesSeeder } from './devices-seeder';
 export { KYCCustomersSeeder } from './kyc-customers-seeder';
