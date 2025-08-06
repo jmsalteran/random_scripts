@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const IS_SANDBOX = true; // TODO: Make this dynamic using the environment variable
-const PRINT_CONSOLE_REQUEST = false;
+const PRINT_CONSOLE_REQUEST = true;
 const API_HOST = "https://api-gueno.prd.gueno.com/api";
 const API_DASHBOARD = "https://www.dashboard.gueno.io";
 const API_SANDBOX_HOST = "https://api-gueno.stg.gueno.com/api";

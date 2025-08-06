@@ -13,7 +13,7 @@ import {
 } from "./gueno.type";
 
 const IS_SANDBOX: boolean = true; // TODO: Make this dynamic using the environment variable
-const PRINT_CONSOLE_REQUEST: boolean = false;
+const PRINT_CONSOLE_REQUEST: boolean = true;
 
 const API_HOST = "https://api-gueno.prd.gueno.com/api";
 const API_DASHBOARD = "https://www.dashboard.gueno.io";

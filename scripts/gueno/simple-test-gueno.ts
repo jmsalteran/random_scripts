@@ -87,7 +87,7 @@ async function testVerifyTransaction() {
     console.log("Testing Gueno Service - Verify Transaction");
     console.log("-----------------------------------");
 
-    const response = await GuenoService.verifyTransaction(simulatedCRYPTOTransaction);
+    const response = await GuenoService.verifyTransaction(simulatedIBANTransaction);
     console.log(response);
   } catch (error) {
     console.error("\n❌ Error occurred during test:");
@@ -310,7 +310,7 @@ async function updateAllUsersWithStandardTags() {
 // testRetrieveConsumerUser();
 // testSimpleCreateConsumerUser();
 // testUpdateConsumerUser();
-testVerifyTransaction();
+//testVerifyTransaction();
 //  testGetTransaction();
 // testUpdateTransaction();
 // testGetConsumerList();

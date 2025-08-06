@@ -202,14 +202,14 @@ exports.simulatedIBANTransaction = {
     transactionId: `jm-test-transaction-${Math.floor(Date.now())}`,
     timestamp: Math.floor(Date.now()),
     //originUserId: "jm-test-user-1751995035686",
-    destinationUserId: "jm-test-user-1752092338147",
+    destinationUserId: "jm-test-user-1752852862244",
     destinationAmountDetails: {
-        transactionAmount: 298,
+        transactionAmount: 4965,
         transactionCurrency: "EUR",
         country: "US"
     },
     originAmountDetails: {
-        transactionAmount: 350,
+        transactionAmount: 4969,
         transactionCurrency: "EUR",
         country: "US"
     },
@@ -243,7 +243,11 @@ exports.simulatedIBANTransaction = {
         },
         {
             key: "isThirdPartyTransaction",
-            value: "false"
+            value: "true"
+        },
+        {
+            key: "isTransactionFromCompany",
+            value: "true"
         }
     ]
 };
