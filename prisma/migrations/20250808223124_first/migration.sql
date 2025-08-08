@@ -115,6 +115,12 @@ CREATE TYPE "PhysicalCardRequestStatus" AS ENUM ('PENDING', 'CARD_CREATED', 'PRO
 -- CreateEnum
 CREATE TYPE "ArQrCodePaymentStatus" AS ENUM ('CREATED', 'STARTING', 'ACTIVE', 'WAITING', 'PAUSED', 'FAILED', 'COMPLETED', 'CANCELLED', 'EXPIRED');
 
+-- CreateEnum
+CREATE TYPE "FraudAction" AS ENUM ('ALLOW', 'REVIEW', 'BLOCK', 'FLAG', 'SUSPEND');
+
+-- CreateEnum
+CREATE TYPE "FraudCaseStatus" AS ENUM ('OPEN', 'UNDER_REVIEW', 'RESOLVED', 'APPROVED', 'REJECTED', 'CLOSED');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -446,6 +452,7 @@ CREATE TABLE "Transaction" (
     "complianceHitRules" JSONB[],
     "screeningLevelResult" INTEGER,
     "temporalWorkflowId" TEXT,
+    "tags" JSONB,
 
     CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
 );
@@ -2044,6 +2051,115 @@ CREATE TABLE "BulkShippingAddressInfo" (
     CONSTRAINT "BulkShippingAddressInfo_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "fraud_rules" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    "archived" BOOLEAN NOT NULL DEFAULT false,
+    "archived_at" TIMESTAMP(3),
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "definition" JSONB NOT NULL,
+    "tags" TEXT[],
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
+
+    CONSTRAINT "fraud_rules_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "fraud_rule_versions" (
+    "id" TEXT NOT NULL,
+    "rule_id" TEXT NOT NULL,
+    "version" INTEGER NOT NULL,
+    "description" TEXT,
+    "definition" JSONB NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "fraud_rule_versions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "fraud_events" (
+    "id" TEXT NOT NULL,
+    "transaction_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "payload" JSONB NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "fraud_events_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "fraud_hits" (
+    "id" TEXT NOT NULL,
+    "event_id" TEXT NOT NULL,
+    "rule_id" TEXT NOT NULL,
+    "action" "FraudAction" NOT NULL,
+    "reason" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "fraud_hits_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "fraud_cases" (
+    "id" TEXT NOT NULL,
+    "event_id" TEXT NOT NULL,
+    "transaction_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "status" "FraudCaseStatus" NOT NULL DEFAULT 'OPEN',
+    "current_action" "FraudAction" NOT NULL,
+    "resolution_action" "FraudAction",
+    "resolution_reason" TEXT,
+    "payload" JSONB NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
+    "closed_at" TIMESTAMP(3),
+
+    CONSTRAINT "fraud_cases_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "fraud_case_hit_rules" (
+    "id" TEXT NOT NULL,
+    "case_id" TEXT NOT NULL,
+    "rule_id" TEXT NOT NULL,
+    "rule_code" TEXT NOT NULL,
+    "rule_name" TEXT NOT NULL,
+    "action" "FraudAction" NOT NULL,
+    "reason" TEXT,
+
+    CONSTRAINT "fraud_case_hit_rules_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "fraud_case_action_logs" (
+    "id" TEXT NOT NULL,
+    "case_id" TEXT NOT NULL,
+    "action" "FraudAction" NOT NULL,
+    "note" TEXT,
+    "system_user_id" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "fraud_case_action_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "fraud_user_risk_scores" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "score" INTEGER NOT NULL DEFAULT 0,
+    "level" "AccountRiskLevel" NOT NULL DEFAULT 'LOW',
+    "reasons" JSONB NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
+
+    CONSTRAINT "fraud_user_risk_scores_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -2488,6 +2604,12 @@ CREATE UNIQUE INDEX "ArQrCodePayment_syntheticId_key" ON "ArQrCodePayment"("synt
 -- CreateIndex
 CREATE UNIQUE INDEX "BulkShippingGroup_rainBulkShippingId_key" ON "BulkShippingGroup"("rainBulkShippingId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "fraud_rules_code_key" ON "fraud_rules"("code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "fraud_user_risk_scores_user_id_key" ON "fraud_user_risk_scores"("user_id");
+
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_referralId_fkey" FOREIGN KEY ("referralId") REFERENCES "Referral"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -2880,3 +3002,42 @@ ALTER TABLE "ArQrCodePayment" ADD CONSTRAINT "ArQrCodePayment_transactionId_fkey
 
 -- AddForeignKey
 ALTER TABLE "BulkShippingGroup" ADD CONSTRAINT "BulkShippingGroup_bulkShippingAddressId_fkey" FOREIGN KEY ("bulkShippingAddressId") REFERENCES "BulkShippingAddressInfo"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_rule_versions" ADD CONSTRAINT "fraud_rule_versions_rule_id_fkey" FOREIGN KEY ("rule_id") REFERENCES "fraud_rules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_events" ADD CONSTRAINT "fraud_events_transaction_id_fkey" FOREIGN KEY ("transaction_id") REFERENCES "Transaction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_events" ADD CONSTRAINT "fraud_events_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_hits" ADD CONSTRAINT "fraud_hits_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "fraud_events"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_hits" ADD CONSTRAINT "fraud_hits_rule_id_fkey" FOREIGN KEY ("rule_id") REFERENCES "fraud_rules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_cases" ADD CONSTRAINT "fraud_cases_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "fraud_events"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_cases" ADD CONSTRAINT "fraud_cases_transaction_id_fkey" FOREIGN KEY ("transaction_id") REFERENCES "Transaction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_cases" ADD CONSTRAINT "fraud_cases_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_case_hit_rules" ADD CONSTRAINT "fraud_case_hit_rules_case_id_fkey" FOREIGN KEY ("case_id") REFERENCES "fraud_cases"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_case_hit_rules" ADD CONSTRAINT "fraud_case_hit_rules_rule_id_fkey" FOREIGN KEY ("rule_id") REFERENCES "fraud_rules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_case_action_logs" ADD CONSTRAINT "fraud_case_action_logs_case_id_fkey" FOREIGN KEY ("case_id") REFERENCES "fraud_cases"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_case_action_logs" ADD CONSTRAINT "fraud_case_action_logs_system_user_id_fkey" FOREIGN KEY ("system_user_id") REFERENCES "SystemUser"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "fraud_user_risk_scores" ADD CONSTRAINT "fraud_user_risk_scores_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

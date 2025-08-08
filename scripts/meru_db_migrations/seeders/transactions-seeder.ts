@@ -37,7 +37,7 @@ export class TransactionsSeeder {
             
             for (const user of users) {
                 // Generate 2-10 transactions per user (random)
-                const numTransactions = Math.floor(Math.random() * 9) + 2; // 2 to 10 transactions
+                const numTransactions = Math.floor(Math.random() * 9) + 0; // 0 to 9 transactions
                 
                 for (let j = 0; j < numTransactions; j++) {
                     const transactionType = getRandomEnumValue(TransactionType);
@@ -149,7 +149,15 @@ export class TransactionsSeeder {
                         blindpayVirtualBankAccountId: null, // Will be set if needed
                         fireblocksGasFeeTransactionId: Math.random() > 0.95 ? InfoGenerator.key().substring(0, 20) : null, // 5% chance of having Fireblocks gas fee transaction ID
                         arQrCodePaymentId: Math.random() > 0.95 ? uuidv4() : null, // 5% chance of having AR QR code payment ID
-                        temporalWorkflowId: Math.random() > 0.9 ? uuidv4() : null // 10% chance of having temporal workflow ID
+                        temporalWorkflowId: Math.random() > 0.9 ? uuidv4() : null, // 10% chance of having temporal workflow ID
+                        tags: Math.random() > 0.5
+                            ? [
+                                { key: "provider", value: "blindpay" },
+                                { key: "bank", value: "JP Morgan Chase" },
+                                { key: "provider", value: "bridge" },
+                                { key: "isFirstTransaction", value: Math.random() > 0.5 ? "true" : "false" }
+                              ]
+                            : [] as any[] // 50% chance of having tags
                     };
                     
                     transactions.push(transaction);

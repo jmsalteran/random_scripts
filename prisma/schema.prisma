@@ -329,6 +329,10 @@ model User {
   easyshipOrder                     EasyshipOrder[]
   arQrCodePayments                  ArQrCodePayment[]
   lastPasswordChangeAt              DateTime?
+  // Fraud/Compliance back-relations
+  fraudEvents                       FraudEvent[]
+  fraudCases                        FraudCase[]
+  fraudUserRiskScore                FraudUserRiskScore?
 }
 
 model StellarAccount {
@@ -621,6 +625,10 @@ model Transaction {
   complianceHitRules                 Json[]
   screeningLevelResult               Int?
   temporalWorkflowId                 String?                     @unique
+  tags                               Json?
+  // Fraud/Compliance back-relations
+  fraudEvents                        FraudEvent[]
+  fraudCases                         FraudCase[]
 }
 
 model CashPayment {
@@ -955,6 +963,8 @@ model SystemUser {
   lastSignin          DateTime?
   TreasuryTransaction TreasuryTransaction[]
   TreasuryAddress     TreasuryAddress[]
+  // Fraud/Compliance back-relations
+  fraudActionLogs     FraudCaseActionLog[]
 }
 
 enum TreasuryTransactionStatus {
@@ -2259,4 +2269,148 @@ model BulkShippingAddressInfo {
   country                   String
   phoneNumber               String
   BulkShippingGroup         BulkShippingGroup[]
+}
+
+// ================= FRAUD AND COMPLIANCE =================
+
+enum FraudAction {
+  ALLOW
+  REVIEW
+  BLOCK
+  FLAG
+  SUSPEND
+}
+
+enum FraudCaseStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  APPROVED
+  REJECTED
+  CLOSED
+}
+
+model FraudRule {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  name        String
+  description String?
+  enabled     Boolean   @default(true)
+  archived    Boolean   @default(false)
+  archivedAt  DateTime? @map("archived_at")
+  version     Int       @default(1)
+  definition  Json
+  tags        String[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
+
+  versions     FraudRuleVersion[]
+  hits         FraudHit[]
+  // back relation for case hit rules
+  caseHitRules FraudCaseHitRule[]
+
+  @@map("fraud_rules")
+}
+
+model FraudRuleVersion {
+  id          String    @id @default(uuid())
+  ruleId      String    @map("rule_id")
+  rule        FraudRule @relation(fields: [ruleId], references: [id])
+  version     Int
+  description String?
+  definition  Json
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("fraud_rule_versions")
+}
+
+model FraudEvent {
+  id            String      @id @default(uuid())
+  transactionId String      @map("transaction_id")
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  userId        String      @map("user_id")
+  user          User        @relation(fields: [userId], references: [id])
+  payload       Json
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  hits  FraudHit[]
+  cases FraudCase[]
+
+  @@map("fraud_events")
+}
+
+model FraudHit {
+  id        String      @id @default(uuid())
+  eventId   String      @map("event_id")
+  event     FraudEvent  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ruleId    String      @map("rule_id")
+  rule      FraudRule   @relation(fields: [ruleId], references: [id])
+  action    FraudAction
+  reason    String?
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@map("fraud_hits")
+}
+
+model FraudCase {
+  id               String          @id @default(uuid())
+  eventId          String          @map("event_id")
+  event            FraudEvent      @relation(fields: [eventId], references: [id])
+  transactionId    String          @map("transaction_id")
+  transaction      Transaction     @relation(fields: [transactionId], references: [id])
+  userId           String          @map("user_id")
+  user             User            @relation(fields: [userId], references: [id])
+  status           FraudCaseStatus @default(OPEN)
+  currentAction    FraudAction     @map("current_action")
+  resolutionAction FraudAction?    @map("resolution_action")
+  resolutionReason String?         @map("resolution_reason")
+  payload          Json
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime?       @updatedAt @map("updated_at")
+  closedAt         DateTime?       @map("closed_at")
+
+  actionLogs FraudCaseActionLog[]
+  hitRules   FraudCaseHitRule[]
+
+  @@map("fraud_cases")
+}
+
+model FraudCaseHitRule {
+  id        String      @id @default(uuid())
+  caseId    String      @map("case_id")
+  fraudCase FraudCase   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  ruleId    String      @map("rule_id")
+  rule      FraudRule   @relation(fields: [ruleId], references: [id])
+  ruleCode  String      @map("rule_code")
+  ruleName  String      @map("rule_name")
+  action    FraudAction
+  reason    String?
+
+  @@map("fraud_case_hit_rules")
+}
+
+model FraudCaseActionLog {
+  id           String      @id @default(uuid())
+  caseId       String      @map("case_id")
+  fraudCase    FraudCase   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  action       FraudAction
+  note         String?
+  systemUserId String?     @map("system_user_id")
+  systemUser   SystemUser? @relation(fields: [systemUserId], references: [id])
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  @@map("fraud_case_action_logs")
+}
+
+model FraudUserRiskScore {
+  id        String           @id @default(uuid())
+  userId    String           @unique @map("user_id")
+  user      User             @relation(fields: [userId], references: [id])
+  score     Int              @default(0)
+  level     AccountRiskLevel @default(LOW)
+  reasons   Json
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime?        @updatedAt @map("updated_at")
+
+  @@map("fraud_user_risk_scores")
 }

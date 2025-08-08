@@ -48,7 +48,6 @@ export class UsdBankAccountsSeeder {
                 skipDuplicates: true
             });
             
-            console.log(`Generated and saved ${usdBankAccounts.length} USD bank accounts`);
             return usdBankAccounts;
         } catch (error) {
             console.error('Error generating and saving USD bank accounts:', error);

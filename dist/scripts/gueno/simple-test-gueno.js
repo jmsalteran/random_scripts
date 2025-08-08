@@ -303,12 +303,8 @@ function updateAllUsersWithStandardTags() {
 // testRetrieveConsumerUser();
 // testSimpleCreateConsumerUser();
 // testUpdateConsumerUser();
-testVerifyTransaction();
-<<<<<<< HEAD
+//testVerifyTransaction();
 //  testGetTransaction();
-=======
-// testGetTransaction();
->>>>>>> 58ae532af5c9e6ed4872d87cfcdff4978de9a3d3
 // testUpdateTransaction();
 // testGetConsumerList();
 // updateAllUsersWithStandardTags();

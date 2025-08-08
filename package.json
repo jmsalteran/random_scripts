@@ -12,7 +12,9 @@
     "db:studio": "prisma studio",
     "import:csv": "ts-node scripts/meru_db_migrations/run-db-import.ts",
     "import:generic": "ts-node scripts/meru_db_migrations/run-generic-import.ts",
-    "analyze:csv": "ts-node scripts/meru_db_migrations/run-generic-import.ts analyze"
+    "analyze:csv": "ts-node scripts/meru_db_migrations/run-generic-import.ts analyze",
+    "seed:fraud-rules": "ts-node scripts/fraud_manager/seed-fraud-rules.ts",
+    "seed:10-users": "ts-node scripts/fraud_manager/seed-10-sample-users.ts"
   },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.829.0",
