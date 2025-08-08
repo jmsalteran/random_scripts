@@ -100,7 +100,17 @@ export class FraudManager {
     const status: ComplianceCheckingStatus = finalAction as unknown as ComplianceCheckingStatus;
     const executedRulesArray = evaluations.map((e) => ({ code: e.rule.code, action: e.action })) as unknown as Prisma.InputJsonValue[];
     const hitRulesArray = evaluations.map((e) => ({ code: e.rule.code, reason: e.reason })) as unknown as Prisma.InputJsonValue[];
-    await this.prisma.transaction.update({ where: { id: transactionId }, data: { complianceCheckingStatus: status, subStatus: "COMPLIANCE_CHECK", complianceExecutedRules: executedRulesArray, complianceHitRules: hitRulesArray } });
+    // TODO: Ask if this is using this columns for this information
+    await this.prisma.transaction.update({ 
+      where: { 
+        id: transactionId 
+      }, 
+      data: { 
+        complianceCheckingStatus: status, 
+        subStatus: "COMPLIANCE_CHECK", // TODO: Ask if this is using this column for this information or the value
+        complianceExecutedRules: executedRulesArray, 
+        complianceHitRules: hitRulesArray 
+      } });
     console.log(`[FraudManager] transaction:updated`, { transactionId, status: finalAction });
 
     // If not ALLOW -> create a case
@@ -116,7 +126,7 @@ export class FraudManager {
       console.log(`[FraudManager] case:created`, { eventId: prismaEvent.id, transactionId, action: finalAction });
     }
 
-    const result = { action: finalAction, evaluations };
+    const result = { allowed: finalAction === "ALLOW", action: finalAction, evaluations };
     console.log(`[FraudManager] onTransaction:end`, result);
     return result;
   }

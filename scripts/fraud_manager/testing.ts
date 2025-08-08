@@ -21,6 +21,12 @@ async function main() {
     const fraudManager = new FraudManager();
     const event = await fraudManager.onTransaction(tx.id);
     console.log(event);
+    await prisma.transaction.update({
+      where: { id: tx.id },
+      data: {
+        status: "COMPLETED",
+      }
+    });
   } finally {
     await prisma.$disconnect();
   }

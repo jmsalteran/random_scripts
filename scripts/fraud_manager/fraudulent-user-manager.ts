@@ -27,7 +27,6 @@ export class FraudulentUserManager {
     });
     const score = Math.min(100, Math.max(0, signals.reduce((s, x) => s + x.weight, 0)));
     const level: AccountRiskLevel = score >= 80 ? "VERY_HIGH" : score >= 60 ? "HIGH" : score >= 35 ? "MEDIUM" : "LOW";
-    console.log(`[FraudUser] score:computed`, { userId, score, level });
 
     const existing = await this.prisma.fraudUserRiskScore.findUnique({ where: { userId } });
     const reasons = signals.map((s) => ({ key: s.key, description: s.description, weight: s.weight }));
@@ -44,7 +43,6 @@ export class FraudulentUserManager {
       console.log(`[FraudUser] risk:create`, { userId, score, level });
     }
 
-    console.log(`[FraudUser] compute:end`, { userId, score, level });
     return { score, level };
   }
 
@@ -88,6 +86,19 @@ export class FraudulentUserManager {
     if (failedCount >= 3) {
       signals.push({ key: "MANY_FAILS_LAST_7D", weight: Math.min(30, failedCount * 5), description: `${failedCount} failed/rejected in 7d` });
       console.log(`[FraudUser] signal:add`, { key: "MANY_FAILS_LAST_7D", failedCount });
+    }
+
+    // Signal: high-risk country
+    const highRiskCountries = [
+      "NG", "RU", "UA", "IR", "KP", "SY", "SD", "CU", "VE", "AF", "PK", "YE", "SO", "LY", "MM", "ZW", "CD", "CF", "SS"
+    ];
+    if (user.country && highRiskCountries.includes(user.country.toUpperCase())) {
+      signals.push({
+        key: "HIGH_RISK_COUNTRY",
+        weight: 25,
+        description: `User country is high risk: ${user.country}`
+      });
+      console.log(`[FraudUser] signal:add`, { key: "HIGH_RISK_COUNTRY", country: user.country });
     }
 
     // Signal: high country risk based on user.accountRiskLevel
