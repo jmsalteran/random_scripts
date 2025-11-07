@@ -320,6 +320,13 @@ export interface CreateBusinessEntityInput {
   business_country: ISO3166_1;
   tax_number?: TaxNumber;
   accept_terms_and_conditions: boolean;
+  naics_code?: NAICS;
+  business_description?: string;
+  trading_symbol?: string;
+  owned_by?: string;
+  incorporation_date?: DateTime;
+  average_monthly_transaction_count?: string;
+  average_monthly_volume?: string;
 }
 
 export interface UpdateBusinessEntityInput {
