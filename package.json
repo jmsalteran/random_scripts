@@ -14,7 +14,8 @@
     "import:generic": "ts-node scripts/meru_db_migrations/run-generic-import.ts",
     "analyze:csv": "ts-node scripts/meru_db_migrations/run-generic-import.ts analyze",
     "seed:fraud-rules": "ts-node scripts/fraud_manager/seed-fraud-rules.ts",
-    "seed:10-users": "ts-node scripts/fraud_manager/seed-10-sample-users.ts"
+    "seed:10-users": "ts-node scripts/fraud_manager/seed-10-sample-users.ts",
+    "test:routefusion": "ts-node scripts/routefusion/main.ts"
   },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.829.0",

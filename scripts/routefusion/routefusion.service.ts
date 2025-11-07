@@ -4,6 +4,8 @@ import {
   CreateBusinessEntityInput,
   Entity,
   BusinessType,
+  CreateUserInput,
+  RoutefusionUser,
 } from "./types/entity.types";
 import {
   CreateWalletInput,
@@ -12,6 +14,7 @@ import {
   Wallet,
   VirtualAccount,
   BusinessEntity,
+  RoutefusionGraphQLError,
 } from "./types/service.types";
 
 export class RoutefusionService {
@@ -19,14 +22,19 @@ export class RoutefusionService {
   private readonly baseURL: string;
 
   constructor() {
-    this.apiKey = process.env.ROTEFUSION_API_KEY || process.env.ROUTEFUSION_API_KEY || "";
-    
+    this.apiKey =
+      process.env.ROTEFUSION_API_KEY || process.env.ROUTEFUSION_API_KEY || "";
+
     if (!this.apiKey) {
-      throw new Error("ROTEFUSION_API_KEY or ROUTEFUSION_API_KEY environment variable is required");
+      throw new Error(
+        "ROTEFUSION_API_KEY or ROUTEFUSION_API_KEY environment variable is required"
+      );
     }
 
     // Default to sandbox, can be overridden with env variable
-    this.baseURL = process.env.ROUTEFUSION_API_URL || "https://sandbox.external.routefusion.com/graphql";
+    this.baseURL =
+      process.env.ROUTEFUSION_API_URL ||
+      "https://sandbox.external.routefusion.com/graphql";
   }
 
   /**
@@ -37,10 +45,14 @@ export class RoutefusionService {
     variables?: Record<string, any>
   ): Promise<T> {
     try {
-      logger.info(`[RoutefusionService] Executing GraphQL request`);
-      logger.debug(`[RoutefusionService] Query: ${query}`);
       if (variables) {
-        logger.debug(`[RoutefusionService] Variables: ${JSON.stringify(variables, null, 2)}`);
+        logger.debug(
+          `[RoutefusionService] Variables: ${JSON.stringify(
+            variables,
+            null,
+            2
+          )}`
+        );
       }
 
       const response = await fetch(this.baseURL, {
@@ -57,16 +69,22 @@ export class RoutefusionService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`[RoutefusionService] HTTP error: ${response.status} ${response.statusText}`);
-        throw new Error(`Routefusion API HTTP error: ${response.status} ${response.statusText} - ${errorText}`);
+        logger.error(
+          `[RoutefusionService] HTTP error: ${response.status} ${response.statusText}`
+        );
+        throw new Error(
+          `Routefusion API HTTP error: ${response.status} ${response.statusText} - ${errorText}`
+        );
       }
 
       const responseData: GraphQLResponse<T> = await response.json();
 
       if (responseData.errors && responseData.errors.length > 0) {
-        const errorMessages = responseData.errors.map(e => e.message).join(", ");
+        const errorMessages = responseData.errors
+          .map((e) => e.message)
+          .join(", ");
         logger.error(`[RoutefusionService] GraphQL errors: ${errorMessages}`);
-        throw new Error(`GraphQL errors: ${errorMessages}`);
+        throw new RoutefusionGraphQLError(responseData.errors);
       }
 
       if (!responseData.data) {
@@ -85,11 +103,96 @@ export class RoutefusionService {
   }
 
   /**
+   * Create a user
+   * Returns the user object from the mutation Ex: { routefusionUserID: '11b24079-3ad3-4b4c-a488-1d7707f95186' }
+   */
+  async createUser(
+    input: CreateUserInput
+  ): Promise<{ routefusionUserID: string }> {
+    const createUserMutation = `
+      mutation createUser (
+          $email: Email!
+          $first_name: String
+          $last_name: String
+          $admin: Boolean
+          $send_invite_email: Boolean
+      ) {
+          createUser (
+              email: $email
+              first_name: $first_name
+              last_name: $last_name
+              admin: $admin
+              send_invite_email: $send_invite_email
+          )
+      }
+    `;
+    try {
+      const result = await this.executeGraphQL<{ routefusionUserID: string }>(
+        createUserMutation,
+        input
+      );
+      return result;
+    } catch (error) {
+      logger.error(`[RoutefusionService] Error creating user: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a user by ID
+   */
+  async getUser(userId: string): Promise<RoutefusionUser> {
+    try {
+      const query = `
+        query User($userId: UUID!) {
+          user(id: $userId) {
+            id
+            identifier
+            email
+            first_name
+            last_name
+            admin
+            role
+            organization {
+              id
+              identifier
+              admin
+              restricted
+              enabled
+              mandatory_mfa
+              created_date
+            }
+            created_date
+            created_by
+            last_invite_sent_at
+            created_at
+            invite_accepted
+            last_login
+            disabled
+            main_org_disabled
+          }
+        }
+      `;
+      const result = await this.executeGraphQL<{ user: RoutefusionUser }>(
+        query,
+        { userId: userId }
+      );
+      return result.user;
+    } catch (error) {
+      logger.error(`[RoutefusionService] Error getting user: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
    * Create a business entity
    * Returns the entity ID (UUID) from the mutation
    */
-  async createBusinessEntity(input: CreateBusinessEntityInput): Promise<string> {
-    const mutation = `
+  async createBusinessEntity(
+    input: CreateBusinessEntityInput
+  ): Promise<string> {
+    try {
+      const mutation = `
       mutation createBusinessEntity(
         $user_id: UUID
         $email: Email!
@@ -104,15 +207,14 @@ export class RoutefusionService {
         $business_state_province_region: String
         $business_postal_code: PostalCode
         $business_country: ISO3166_1!
-        $tax_number: TaxNumber
-        $trade_name: TradeName
-        $naics_code: NAICS
         $business_type: BusinessType
+        $tax_number: TaxNumber
+        $accept_terms_and_conditions: Boolean!
+        $naics_code: NAICS
         $business_description: String
         $trading_symbol: String
         $owned_by: String
         $incorporation_date: DateTime
-        $representatives: [RepresentativeInput]
         $accept_terms_and_conditions: Boolean!
         $average_monthly_transaction_count: String
         $average_monthly_volume: String
@@ -131,36 +233,38 @@ export class RoutefusionService {
           business_state_province_region: $business_state_province_region
           business_postal_code: $business_postal_code
           business_country: $business_country
-          tax_number: $tax_number
-          trade_name: $trade_name
-          naics_code: $naics_code
           business_type: $business_type
+          tax_number: $tax_number
+          accept_terms_and_conditions: $accept_terms_and_conditions
+          naics_code: $naics_code
           business_description: $business_description
           trading_symbol: $trading_symbol
           owned_by: $owned_by
           incorporation_date: $incorporation_date
-          representatives: $representatives
-          accept_terms_and_conditions: $accept_terms_and_conditions
           average_monthly_transaction_count: $average_monthly_transaction_count
           average_monthly_volume: $average_monthly_volume
         )
       }
     `;
 
-    const result = await this.executeGraphQL<{ createBusinessEntity: string }>(
-      mutation,
-      input
-    );
+      const result = await this.executeGraphQL<{
+        createBusinessEntity: string;
+      }>(mutation, input);
 
-    const entityId = result.createBusinessEntity;
-    logger.info(`[RoutefusionService] Created business entity: ${entityId}`);
-    return entityId;
+      const entityId = result.createBusinessEntity;
+      logger.info(`[RoutefusionService] Created business entity: ${entityId}`);
+      return entityId;
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
    * Create a business entity and return the full entity object
    */
-  async createBusinessEntityAndFetch(input: CreateBusinessEntityInput): Promise<Entity> {
+  async createBusinessEntityAndFetch(
+    input: CreateBusinessEntityInput
+  ): Promise<Entity> {
     const entityId = await this.createBusinessEntity(input);
     return await this.getEntity(entityId);
   }
@@ -185,14 +289,18 @@ export class RoutefusionService {
       { input }
     );
 
-    logger.info(`[RoutefusionService] Created wallet: ${result.createWallet.id} for currency: ${result.createWallet.currency}`);
+    logger.info(
+      `[RoutefusionService] Created wallet: ${result.createWallet.id} for currency: ${result.createWallet.currency}`
+    );
     return result.createWallet;
   }
 
   /**
    * Create a virtual account (named virtual bank account) for a wallet
    */
-  async createVirtualAccount(input: CreateVirtualAccountInput): Promise<VirtualAccount> {
+  async createVirtualAccount(
+    input: CreateVirtualAccountInput
+  ): Promise<VirtualAccount> {
     const mutation = `
       mutation createVirtualAccount($input: CreateVirtualAccountInput!) {
         createVirtualAccount(input: $input) {
@@ -206,15 +314,22 @@ export class RoutefusionService {
       }
     `;
 
-    const result = await this.executeGraphQL<{ createVirtualAccount: VirtualAccount }>(
-      mutation,
-      { input }
-    );
+    const result = await this.executeGraphQL<{
+      createVirtualAccount: VirtualAccount;
+    }>(mutation, { input });
 
-    logger.info(`[RoutefusionService] Created virtual account: ${result.createVirtualAccount.id} (${result.createVirtualAccount.name})`);
+    logger.info(
+      `[RoutefusionService] Created virtual account: ${result.createVirtualAccount.id} (${result.createVirtualAccount.name})`
+    );
     if (result.createVirtualAccount.account_number) {
-      logger.info(`[RoutefusionService] Account Number: ${result.createVirtualAccount.account_number}`);
-      logger.info(`[RoutefusionService] Routing Number: ${result.createVirtualAccount.routing_number || "N/A"}`);
+      logger.info(
+        `[RoutefusionService] Account Number: ${result.createVirtualAccount.account_number}`
+      );
+      logger.info(
+        `[RoutefusionService] Routing Number: ${
+          result.createVirtualAccount.routing_number || "N/A"
+        }`
+      );
     }
     return result.createVirtualAccount;
   }
@@ -236,10 +351,9 @@ export class RoutefusionService {
       }
     `;
 
-    const result = await this.executeGraphQL<{ virtualAccount: VirtualAccount }>(
-      query,
-      { id: virtualAccountId }
-    );
+    const result = await this.executeGraphQL<{
+      virtualAccount: VirtualAccount;
+    }>(query, { id: virtualAccountId });
 
     return result.virtualAccount;
   }
@@ -267,15 +381,12 @@ export class RoutefusionService {
       }
     `;
 
-    const result = await this.executeGraphQL<{ 
-      organizationVirtualAccountsPage: { 
-        virtualAccounts: VirtualAccount[]; 
+    const result = await this.executeGraphQL<{
+      organizationVirtualAccountsPage: {
+        virtualAccounts: VirtualAccount[];
         total: number;
-      } 
-    }>(
-      query,
-      { page, pageSize }
-    );
+      };
+    }>(query, { page, pageSize });
 
     return {
       virtualAccounts: result.organizationVirtualAccountsPage.virtualAccounts,
@@ -298,10 +409,9 @@ export class RoutefusionService {
       }
     `;
 
-    const result = await this.executeGraphQL<{ wallet: Wallet }>(
-      query,
-      { id: walletId }
-    );
+    const result = await this.executeGraphQL<{ wallet: Wallet }>(query, {
+      id: walletId,
+    });
 
     return result.wallet;
   }
@@ -352,10 +462,9 @@ export class RoutefusionService {
       }
     `;
 
-    const result = await this.executeGraphQL<{ entity: Entity }>(
-      query,
-      { entity_id: entityId }
-    );
+    const result = await this.executeGraphQL<{ entity: Entity }>(query, {
+      entity_id: entityId,
+    });
 
     return result.entity;
   }

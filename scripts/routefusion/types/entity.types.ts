@@ -277,6 +277,31 @@ export interface CreatePersonalEntityInput {
   tax_number?: TaxNumber;
   accept_terms_and_conditions: boolean;
 }
+export interface RoutefusionUser {
+  id: UUID;
+  identifier: string;
+  email: Email;
+  first_name?: string;
+  last_name?: string;
+  admin?: boolean;
+  organization?: RoutefusionOrganization;
+}
+
+export interface RoutefusionOrganization {
+  id: UUID;
+  identifier: string;
+  admin?: boolean;
+  restricted?: boolean;
+  enabled?: boolean;
+}
+
+export interface CreateUserInput {
+  email: Email;
+  first_name?: string;
+  last_name?: string;
+  admin?: boolean;
+  send_invite_email?: boolean;
+}
 
 export interface CreateBusinessEntityInput {
   user_id?: UUID;
@@ -284,26 +309,17 @@ export interface CreateBusinessEntityInput {
   phone?: string;
   phone_country?: string;
   contact_first_name: string;
-  contact_last_name: string;
+  business_type?: BusinessType;
   business_name: string;
   business_address1: string;
+  contact_last_name: string;
   business_address2?: string;
   business_city?: string;
   business_state_province_region?: string;
   business_postal_code?: PostalCode;
   business_country: ISO3166_1;
   tax_number?: TaxNumber;
-  trade_name?: TradeName;
-  naics_code?: NAICS;
-  business_type?: BusinessType;
-  business_description?: string;
-  trading_symbol?: string;
-  owned_by?: string;
-  incorporation_date?: DateTime;
-  representatives?: RepresentativeInput[];
   accept_terms_and_conditions: boolean;
-  average_monthly_transaction_count?: string;
-  average_monthly_volume?: string;
 }
 
 export interface UpdateBusinessEntityInput {
