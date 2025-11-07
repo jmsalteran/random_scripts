@@ -5,6 +5,7 @@ import {
   Entity,
   BusinessType,
   CreateUserInput,
+  RoutefusionBusiness,
   RoutefusionUser,
 } from "./types/entity.types";
 import {
@@ -261,39 +262,105 @@ export class RoutefusionService {
   }
 
   /**
-   * Create a business entity and return the full entity object
+   * Get a business entity by ID
    */
-  async createBusinessEntityAndFetch(
-    input: CreateBusinessEntityInput
-  ): Promise<Entity> {
-    const entityId = await this.createBusinessEntity(input);
-    return await this.getEntity(entityId);
+  async getBusinessEntity(businessId: string): Promise<RoutefusionBusiness> {
+    try {
+      const query = `
+        query entity (
+            $businessId: UUID!
+        ) {
+            entity (
+                entity_id: $businessId
+            ) {
+                id
+                type
+                business_name
+                first_name
+                last_name
+                state
+                email
+                phone
+                address1
+                address2
+                city
+                state_province_region
+                postal_code
+                country
+                representatives {
+                    first_name
+                    last_name
+                    date_of_birth
+                    is_signer
+                    residential_address
+                    residential_address2
+                    residential_city
+                    residential_state_province_region
+                    residential_postal_code
+                    residential_country
+                    citizenship
+                    responsibility
+                    ownership_percentage
+                    email
+                    phone
+                    job_title
+                    passport_number
+                }
+                creator {
+                    id
+                    identifier
+                    email
+                    first_name
+                    last_name
+                    admin
+                }
+                users {
+                    id
+                    identifier
+                    email
+                    first_name
+                    last_name
+                    admin
+                }
+            }
+        }
+      `;
+      const result = await this.executeGraphQL<{ entity: RoutefusionBusiness }>(query, { businessId: businessId });
+      return result.entity;
+    } catch (error) {
+      logger.error(`[RoutefusionService] Error getting business entity: ${error}`);
+      throw error;
+    }
   }
 
   /**
    * Create a wallet for an entity
    */
   async createWallet(input: CreateWalletInput): Promise<Wallet> {
-    const mutation = `
-      mutation createWallet($input: CreateWalletInput!) {
-        createWallet(input: $input) {
-          id
-          entity_id
-          currency
-          balance
+    try {
+      const mutation = `
+        mutation createWallet (
+            $entityId: UUID!
+            $currency: ISO4217!
+        ) {
+            createWallet (
+                entity_id: $entityId
+                currency: $currency
+            )
         }
-      }
-    `;
+      `;
 
-    const result = await this.executeGraphQL<{ createWallet: Wallet }>(
-      mutation,
-      { input }
-    );
+      const result = await this.executeGraphQL<{ createWallet: Wallet }>(
+        mutation,
+        { input }
+      );
+      logger.info(`[RoutefusionService] Created wallet: ${JSON.stringify(result, null, 2)}`);
 
-    logger.info(
-      `[RoutefusionService] Created wallet: ${result.createWallet.id} for currency: ${result.createWallet.currency}`
-    );
-    return result.createWallet;
+      return result.createWallet;
+    } catch (error) {
+      logger.error(`[RoutefusionService] Error creating wallet: ${error}`);
+      throw error;
+    }
   }
 
   /**

@@ -2,12 +2,15 @@
  * Routefusion Service Types
  * Types used by the RoutefusionService class
  */
-
+import * as cc from 'currency-codes-ts';
 import { Entity, EntityState } from "./entity.types";
+import { UUID } from "./entity.types";
 
 // ============================================================================
 // GRAPHQL RESPONSE TYPES
 // ============================================================================
+
+export type ISO4217 = ReturnType<typeof cc.codes>[number];
 
 export interface GraphQLResponse<T> {
   data?: T;
@@ -169,8 +172,8 @@ export class RoutefusionGraphQLError extends Error {
 // ============================================================================
 
 export interface CreateWalletInput {
-  entity_id: string;
-  currency: string;
+  entityId: UUID;
+  currency: ISO4217;
 }
 
 export interface Wallet {

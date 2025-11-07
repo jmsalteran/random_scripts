@@ -287,6 +287,26 @@ export interface RoutefusionUser {
   organization?: RoutefusionOrganization;
 }
 
+export interface RoutefusionBusiness {
+  id: UUID;
+  type: EntityType;
+  business_name: string;
+  first_name: string;
+  last_name: string;
+  state: EntityState;
+  email: Email;
+  phone: string;
+  address1: string;
+  address2: string;
+  city: string;
+  state_province_region: string;
+  postal_code: PostalCode;
+  country: ISO3166_1;
+  representatives: Representative[];
+  creator: RoutefusionUser;
+  users: RoutefusionUser[];
+}
+
 export interface RoutefusionOrganization {
   id: UUID;
   identifier: string;

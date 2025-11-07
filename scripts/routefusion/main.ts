@@ -1,5 +1,6 @@
 import { RoutefusionService } from "./routefusion.service";
 import { CreateBusinessEntityInput, BusinessType, CreateUserInput } from "./types/entity.types";
+import { UUID } from "./types/entity.types";
 
 async function testCreateBusinessEntity() {
   try {
@@ -45,27 +46,21 @@ async function testCreateBusinessEntity() {
     console.log("Entity ID:", entityId);
 
     // Fetch the full entity details
-    console.log("\nFetching full entity details...");
-    // const businessEntity = await routefusionService.getEntity(entityId);
-
-    // console.log("\nFull Entity Details:");
-    // console.log(JSON.stringify(businessEntity, null, 2));
-    // console.log("\nBusiness Entity ID:", businessEntity.id);
-    // console.log("Business Entity Name:", businessEntity.business_name || businessEntity.entity_name);
-    // console.log("Business Entity Country:", businessEntity.country);
-    // if (businessEntity.state) {
-    //   console.log("Business Entity State:", businessEntity.state);
-    // }
-
-    // return businessEntity;
   } catch (error) {
-    // console.error("\n❌ Error occurred during test:");
-    // if (error instanceof Error) {
-    //   console.error("Error message:", error.message);
-    //   console.error("Error stack:", error.stack);
-    // } else {
-    //   console.error("Unknown error:", error);
-    // }
+    throw error;
+  }
+}
+
+async function testGetBusinessEntity() {
+  try {
+    console.log("Testing Routefusion Service - Get Business Entity");
+    console.log("-----------------------------------------------------");
+    const businessId = "63cdba52-cc6d-450e-9a20-83c9b40a251e";
+    const routefusionService = new RoutefusionService();
+    const entity = await routefusionService.getBusinessEntity(businessId);
+    console.log("\n✅ Successfully got business entity!");
+    console.log("Entity:", JSON.stringify(entity, null, 2));
+  } catch (error) {
     throw error;
   }
 }
@@ -111,10 +106,28 @@ async function testGetUser() {
   }
 }
 
+async function testCreateWallet() {
+  try {
+    console.log("Testing Routefusion Service - Create Wallet");
+    console.log("-----------------------------------------------------");
+    const businessId = '63cdba52-cc6d-450e-9a20-83c9b40a251e' as UUID;
+    const routefusionService = new RoutefusionService();
+    const wallet = await routefusionService.createWallet({
+      entityId: businessId,
+      currency: 'USD',
+    });
+    console.log("\n✅ Successfully created wallet!");
+    console.log("Wallet:", JSON.stringify(wallet, null, 2));
+  } catch (error) {
+    throw error;
+  }
+}
 async function main() {
-  await testCreateBusinessEntity();
+  // await testCreateBusinessEntity();
   // await testCreateUser();
   // await testGetUser();
+  // await testGetBusinessEntity();
+  await testCreateWallet();
 }
 
 main()
