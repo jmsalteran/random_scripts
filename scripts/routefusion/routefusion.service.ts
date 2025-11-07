@@ -209,7 +209,6 @@ export class RoutefusionService {
         $business_country: ISO3166_1!
         $business_type: BusinessType
         $tax_number: TaxNumber
-        $accept_terms_and_conditions: Boolean!
         $naics_code: NAICS
         $business_description: String
         $trading_symbol: String
@@ -218,6 +217,7 @@ export class RoutefusionService {
         $accept_terms_and_conditions: Boolean!
         $average_monthly_transaction_count: String
         $average_monthly_volume: String
+        $website_url: String
       ) {
         createBusinessEntity(
           user_id: $user_id
@@ -243,6 +243,7 @@ export class RoutefusionService {
           incorporation_date: $incorporation_date
           average_monthly_transaction_count: $average_monthly_transaction_count
           average_monthly_volume: $average_monthly_volume
+          website_url: $website_url
         )
       }
     `;

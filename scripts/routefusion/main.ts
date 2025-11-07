@@ -28,6 +28,12 @@ async function testCreateBusinessEntity() {
       business_address1: "123 Main St", // Required: Primary business address
       business_country: "US", // Required: ISO 3166-1 country code
       accept_terms_and_conditions: true, // Required: Must be true to create entity
+      naics_code: "111111", // Required: NAICS code
+      business_description: "Business description", // Required: Business description
+      trading_symbol: "ACME", // Required: Trading symbol
+      owned_by: "John Doe", // Required: Owner name
+      incorporation_date: new Date().toISOString(), // Required: Incorporation date
+      website_url: "https://www.example.com", // Required: Website URL
     };
 
     // console.log(JSON.stringify(entityData, null, 2));

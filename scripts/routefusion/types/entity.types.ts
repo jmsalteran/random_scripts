@@ -327,6 +327,7 @@ export interface CreateBusinessEntityInput {
   incorporation_date?: DateTime;
   average_monthly_transaction_count?: string;
   average_monthly_volume?: string;
+  website_url?: string;
 }
 
 export interface UpdateBusinessEntityInput {
