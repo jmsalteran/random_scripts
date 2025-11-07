@@ -16,6 +16,8 @@ import {
   VirtualAccount,
   BusinessEntity,
   RoutefusionGraphQLError,
+  UploadBusinessEntityDocumentInput,
+  UploadDocumentResponse,
 } from "./types/service.types";
 
 export class RoutefusionService {
@@ -260,6 +262,39 @@ export class RoutefusionService {
       throw error;
     }
   }
+ 
+  /**
+   * Upload an entity document
+   */
+  async uploadEntityDocument(
+    input: UploadBusinessEntityDocumentInput
+  ): Promise<UploadDocumentResponse> {
+    try {
+      const mutation = `
+        mutation singleUpload(
+          $file: Upload!
+        ) {
+          singleUpload(
+            file: $file
+            entity_id: "${input.entityId}"
+            file_enum: ${input.file_enum}
+          ) {
+            filename
+          }
+        }
+      `;
+      const result = await this.executeGraphQL<{
+        singleUpload: UploadDocumentResponse;
+      }>(mutation, { file: input.file });
+      logger.info(
+        `[RoutefusionService] Uploaded document: ${JSON.stringify(result, null, 2)}`
+      );
+      return result.singleUpload;
+    } catch (error) {
+      logger.error(`[RoutefusionService] Error uploading document: ${error}`);
+      throw error;
+    }
+  }
 
   /**
    * Get a business entity by ID
@@ -325,10 +360,15 @@ export class RoutefusionService {
             }
         }
       `;
-      const result = await this.executeGraphQL<{ entity: RoutefusionBusiness }>(query, { businessId: businessId });
+      const result = await this.executeGraphQL<{ entity: RoutefusionBusiness }>(
+        query,
+        { businessId: businessId }
+      );
       return result.entity;
     } catch (error) {
-      logger.error(`[RoutefusionService] Error getting business entity: ${error}`);
+      logger.error(
+        `[RoutefusionService] Error getting business entity: ${error}`
+      );
       throw error;
     }
   }
@@ -350,13 +390,17 @@ export class RoutefusionService {
         }
       `;
 
-      const result = await this.executeGraphQL<{ createWallet: Wallet }>(
+      const result = await this.executeGraphQL<{ createWallet: string }>(
         mutation,
-        { input }
+        { entityId: input.entityId, currency: input.currency }
       );
-      logger.info(`[RoutefusionService] Created wallet: ${JSON.stringify(result, null, 2)}`);
 
-      return result.createWallet;
+      const walletId = result.createWallet;
+      logger.info(`[RoutefusionService] Created wallet with ID: ${walletId}`);
+
+      // Fetch the full wallet details
+      const wallet = await this.getWallet(walletId);
+      return wallet;
     } catch (error) {
       logger.error(`[RoutefusionService] Error creating wallet: ${error}`);
       throw error;

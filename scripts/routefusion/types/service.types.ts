@@ -213,3 +213,17 @@ export interface BusinessEntity {
   status?: EntityState | string;
 }
 
+// ============================================================================
+// DOCUMENT UPLOAD TYPES
+// ============================================================================
+
+export interface UploadBusinessEntityDocumentInput {
+  entityId: UUID;
+  file: any; // Upload type (File, Blob, or stream)
+  file_enum: string; // e.g., "bank_statement"
+}
+
+export interface UploadDocumentResponse {
+  filename: string;
+}
+

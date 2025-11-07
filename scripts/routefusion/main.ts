@@ -122,12 +122,30 @@ async function testCreateWallet() {
     throw error;
   }
 }
+
+async function testUploadEntityDocument() {
+  try {
+    console.log("Testing Routefusion Service - Upload Entity Document");
+    console.log("-----------------------------------------------------");
+    const routefusionService = new RoutefusionService();
+    const document = await routefusionService.uploadEntityDocument({
+      entityId: '63cdba52-cc6d-450e-9a20-83c9b40a251e',
+      file: 'test.pdf',
+      file_enum: 'bank_statement',
+    });
+    console.log("\n✅ Successfully uploaded entity document!");
+    console.log("Document:", JSON.stringify(document, null, 2));
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function main() {
   // await testCreateBusinessEntity();
   // await testCreateUser();
   // await testGetUser();
   // await testGetBusinessEntity();
-  await testCreateWallet();
+  // await testCreateWallet();
 }
 
 main()
