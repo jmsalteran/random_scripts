@@ -378,6 +378,44 @@ export class RoutefusionService {
   }
 
   /**
+   * Finalize a business entity
+   * Indicates the entity is ready to execute the onboarding process.
+   * Once finalized, Routefusion will send the entity through compliance reviews.
+   * The entity will immediately move to a pending state after finalizing.
+   * Reference: https://docs.routefusion.com/reference/finalize-entity
+   */
+  async finalizeEntity(entityId: string): Promise<string> {
+    try {
+      const mutation = `
+        mutation finalizeEntity($entity_id: UUID!) {
+          finalizeEntity(entity_id: $entity_id) {
+              success
+              error
+              validations {
+                  id
+                  resource
+                  message
+                  missingKeys
+              }
+          }
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        finalizeEntity: string;
+      }>(mutation, { entity_id: entityId });
+
+      logger.info(
+        `[RoutefusionService] Finalized entity: ${result.finalizeEntity}`
+      );
+      return result.finalizeEntity;
+    } catch (error) {
+      logger.error(`[RoutefusionService] Error finalizing entity: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
    * Get a business entity by ID
    */
   async getBusinessEntity(businessId: string): Promise<RoutefusionBusiness> {
@@ -452,6 +490,13 @@ export class RoutefusionService {
       );
       throw error;
     }
+  }
+
+  /**
+   * Finalize a business entity
+   */
+  async finalizeBusinessEntity(businessId: string): Promise<void> {
+
   }
 
   /**

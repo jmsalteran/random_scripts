@@ -167,13 +167,36 @@ async function testUploadEntityDocument(entityId: string) {
   }
 }
 
+async function testFinalizeEntity(entityId: string) {
+  try {
+    console.log("Testing Routefusion Service - Finalize Entity");
+    console.log("-----------------------------------------------------");
+    const routefusionService = new RoutefusionService();
+    const finalizedEntityId = await routefusionService.finalizeEntity(entityId);
+    console.log("\n✅ Successfully finalized entity!");
+    console.log("Entity ID:", finalizedEntityId);
+    console.log("\nNote: The entity will immediately move to a pending state after finalizing.");
+    console.log("Routefusion will send the entity through compliance reviews.");
+  } catch (error) {
+    console.error("\n❌ Error occurred during test:");
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    throw error;
+  }
+}
+
 async function main() {
   //await testCreateBusinessEntity(); //4354c4e-d88f-458a-b9ce-45772447730d
   // await testCreateUser();
   // await testGetUser();
   // await testGetBusinessEntity();
   // await testCreateWallet("34354c4e-d88f-458a-b9ce-45772447730d");
-  await testUploadEntityDocument("34354c4e-d88f-458a-b9ce-45772447730d");
+  // await testUploadEntityDocument("34354c4e-d88f-458a-b9ce-45772447730d");
+  await testFinalizeEntity("34354c4e-d88f-458a-b9ce-45772447730d");
 }
 
 main()
