@@ -3,7 +3,7 @@
  * Types used by the RoutefusionService class
  */
 import * as cc from 'currency-codes-ts';
-import { Entity, EntityState } from "./entity.types";
+import { Entity, EntityState, FileEnum } from "./entity.types";
 import { UUID } from "./entity.types";
 
 // ============================================================================
@@ -220,7 +220,7 @@ export interface BusinessEntity {
 export interface UploadBusinessEntityDocumentInput {
   entityId: UUID;
   file: any; // Upload type (File, Blob, or stream)
-  file_enum: string; // e.g., "bank_statement"
+  file_enum: FileEnum | string; // File enum type (use FileEnum for type safety)
 }
 
 export interface UploadDocumentResponse {

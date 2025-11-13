@@ -262,7 +262,79 @@ export class RoutefusionService {
       throw error;
     }
   }
- 
+
+  /**
+   * Execute a GraphQL mutation with file upload (multipart/form-data)
+   */
+  private async executeGraphQLFileUpload<T>(
+    operations: string,
+    map: Record<string, string[]>,
+    file: File | Blob | Buffer
+  ): Promise<T> {
+    try {
+      const formData = new FormData();
+
+      // Add operations (the GraphQL mutation)
+      formData.append("operations", operations);
+
+      // Add map (maps file variables to file parts)
+      formData.append("map", JSON.stringify(map));
+
+      // Add the file
+      // Determine the filename based on file type
+      let filename = "test-document.txt";
+      if (file instanceof File) {
+        filename = file.name;
+      }
+
+      // In Node.js, FormData.append accepts Blob/Buffer with filename as third parameter
+      formData.append("0", file as any, filename);
+
+      const response = await fetch(this.baseURL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "x-apollo-operation-name": "singleUpload",
+          // Don't set Content-Type header - let fetch set it with boundary for multipart/form-data
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(
+          `[RoutefusionService] HTTP error: ${response.status} ${response.statusText}`
+        );
+        throw new Error(
+          `Routefusion API HTTP error: ${response.status} ${response.statusText} - ${errorText}`
+        );
+      }
+
+      const responseData: GraphQLResponse<T> = await response.json();
+
+      if (responseData.errors && responseData.errors.length > 0) {
+        const errorMessages = responseData.errors
+          .map((e) => e.message)
+          .join(", ");
+        logger.error(`[RoutefusionService] GraphQL errors: ${errorMessages}`);
+        throw new RoutefusionGraphQLError(responseData.errors);
+      }
+
+      if (!responseData.data) {
+        throw new Error("No data returned from GraphQL response");
+      }
+
+      logger.info(`[RoutefusionService] File upload successful`);
+      return responseData.data;
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(`[RoutefusionService] File upload failed: ${error.message}`);
+        throw error;
+      }
+      throw new Error(`Routefusion API error: ${String(error)}`);
+    }
+  }
+
   /**
    * Upload an entity document
    */
@@ -270,22 +342,31 @@ export class RoutefusionService {
     input: UploadBusinessEntityDocumentInput
   ): Promise<UploadDocumentResponse> {
     try {
-      const mutation = `
-        mutation singleUpload(
-          $file: Upload!
-        ) {
-          singleUpload(
-            file: $file
-            entity_id: "${input.entityId}"
-            file_enum: ${input.file_enum}
-          ) {
-            filename
+      const operations = JSON.stringify({
+        query: `
+          mutation singleUpload($file: Upload!) {
+            singleUpload(
+              file: $file
+              entity_id: "${input.entityId}"
+              file_enum: ${input.file_enum}
+            ) {
+              filename
+            }
           }
-        }
-      `;
-      const result = await this.executeGraphQL<{
+        `,
+        variables: {
+          file: null,
+        },
+      });
+
+      const map = {
+        "0": ["variables.file"],
+      };
+
+      const result = await this.executeGraphQLFileUpload<{
         singleUpload: UploadDocumentResponse;
-      }>(mutation, { file: input.file });
+      }>(operations, map, input.file);
+
       logger.info(
         `[RoutefusionService] Uploaded document: ${JSON.stringify(result, null, 2)}`
       );
@@ -438,8 +519,7 @@ export class RoutefusionService {
         `[RoutefusionService] Account Number: ${result.createVirtualAccount.account_number}`
       );
       logger.info(
-        `[RoutefusionService] Routing Number: ${
-          result.createVirtualAccount.routing_number || "N/A"
+        `[RoutefusionService] Routing Number: ${result.createVirtualAccount.routing_number || "N/A"
         }`
       );
     }

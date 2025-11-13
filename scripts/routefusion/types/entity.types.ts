@@ -35,6 +35,37 @@ export enum DocumentType {
   BANK_STATEMENT = "bank_statement",
 }
 
+export enum FileEnum {
+  /** Document proving vehicle registration */
+  PROOF_OF_REGISTRATION = "proof_of_registration",
+  /** Document proving ownership of the asset */
+  PROOF_OF_OWNERSHIP = "proof_of_ownership",
+  /** Statement from a bank account */
+  BANK_STATEMENT = "bank_statement",
+  /** International travel document */
+  PASSPORT = "passport",
+  /** Front side of the driver's license */
+  FRONT_DRIVERS_LICENSE = "front_drivers_license",
+  /** Back side of the driver's license */
+  BACK_DRIVERS_LICENSE = "back_drivers_license",
+  /** Front side of the permanent residence card */
+  FRONT_PERMANENT_RESIDENCE_CARD = "front_permanent_residence_card",
+  /** Back side of the permanent residence card */
+  BACK_PERMANENT_RESIDENCE_CARD = "back_permanent_residence_card",
+  /** Front side of the national/state ID */
+  FRONT_NATIONAL_STATE_ID = "front_national_state_id",
+  /** Back side of the national/state ID */
+  BACK_NATIONAL_STATE_ID = "back_national_state_id",
+  /** Front side of the exit/entry permit */
+  FRONT_EXIT_ENTRY_PERMIT = "front_exit_entry_permit",
+  /** Back side of the exit/entry permit */
+  BACK_EXIT_ENTRY_PERMIT = "back_exit_entry_permit",
+  /** Document proving residential address */
+  PROOF_OF_ADDRESS = "proof_of_address",
+  /** Real-time verification requiring actions like head movements, blinking, or following instructions. A picture works. */
+  LIVENESS_CHECK = "liveness_check",
+}
+
 export enum EntityState {
   ACCEPTED = "accepted",
   FINALIZED = "finalized",
