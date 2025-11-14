@@ -7,6 +7,10 @@ import {
   CreateUserInput,
   RoutefusionBusiness,
   RoutefusionUser,
+  EntityRequiredFields,
+  RepresentativeRequiredFields,
+  EntityRequiredFieldsQueryInput,
+  RepresentativeRequiredFieldsQueryInput,
 } from "./types/entity.types";
 import {
   CreateWalletInput,
@@ -17,7 +21,10 @@ import {
   BusinessEntity,
   RoutefusionGraphQLError,
   UploadBusinessEntityDocumentInput,
+  UploadRepresentativeDocumentInput,
   UploadDocumentResponse,
+  CreateRepresentativeInput,
+  UpdateRepresentativeInput,
 } from "./types/service.types";
 
 export class RoutefusionService {
@@ -378,6 +385,50 @@ export class RoutefusionService {
   }
 
   /**
+   * Upload a document for a representative
+   */
+  async uploadRepresentativeDocument(
+    input: UploadRepresentativeDocumentInput
+  ): Promise<UploadDocumentResponse> {
+    try {
+      const operations = JSON.stringify({
+        query: `
+          mutation singleUpload($file: Upload!) {
+            singleUpload(
+              file: $file
+              representative_id: "${input.representativeId}"
+              file_enum: ${input.file_enum}
+            ) {
+              filename
+            }
+          }
+        `,
+        variables: {
+          file: null,
+        },
+      });
+
+      const map = {
+        "0": ["variables.file"],
+      };
+
+      const result = await this.executeGraphQLFileUpload<{
+        singleUpload: UploadDocumentResponse;
+      }>(operations, map, input.file);
+
+      logger.info(
+        `[RoutefusionService] Uploaded representative document: ${JSON.stringify(result, null, 2)}`
+      );
+      return result.singleUpload;
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error uploading representative document: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Finalize a business entity
    * Indicates the entity is ready to execute the onboarding process.
    * Once finalized, Routefusion will send the entity through compliance reviews.
@@ -411,6 +462,247 @@ export class RoutefusionService {
       return result.finalizeEntity;
     } catch (error) {
       logger.error(`[RoutefusionService] Error finalizing entity: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a representative for a business entity
+   * Reference: https://docs.routefusion.com/reference/create-representative
+   */
+  async createRepresentative(
+    input: CreateRepresentativeInput
+  ): Promise<string> {
+    try {
+      const mutation = `
+        mutation createRepresentative(
+          $entity_id: UUID!
+          $document_expiration_date: DateTime
+          $document_issue_date: DateTime
+          $document_number: String
+          $citizenship: ISO3166_1
+          $date_of_birth: DateTime
+          $email: Email
+          $first_name: String
+          $is_signer: Boolean
+          $last_name: String
+          $job_title: String
+          $ownership_percentage: Int
+          $passport_number: String
+          $phone: String
+          $residential_address: String
+          $residential_address2: String
+          $residential_city: String
+          $residential_country: ISO3166_1
+          $residential_postal_code: PostalCode
+          $residential_state_province_region: String
+          $responsibility: String
+          $tax_number: TaxNumber
+        ) {
+          createRepresentative(
+            entity_id: $entity_id
+            representative: {
+              document_expiration_date: $document_expiration_date
+              document_issue_date: $document_issue_date
+              document_number: $document_number
+              citizenship: $citizenship
+              date_of_birth: $date_of_birth
+              email: $email
+              first_name: $first_name
+              is_signer: $is_signer
+              last_name: $last_name
+              job_title: $job_title
+              ownership_percentage: $ownership_percentage
+              passport_number: $passport_number
+              phone: $phone
+              residential_address: $residential_address
+              residential_address2: $residential_address2
+              residential_city: $residential_city
+              residential_country: $residential_country
+              residential_postal_code: $residential_postal_code
+              residential_state_province_region: $residential_state_province_region
+              responsibility: $responsibility
+              tax_number: $tax_number
+            }
+          )
+        }
+      `;
+
+      const { entity_id, representative } = input;
+      const result = await this.executeGraphQL<{
+        createRepresentative: string;
+      }>(mutation, {
+        entity_id,
+        document_expiration_date: representative.document_expiration_date,
+        document_issue_date: representative.document_issue_date,
+        document_number: representative.document_number,
+        citizenship: representative.citizenship,
+        date_of_birth: representative.date_of_birth,
+        email: representative.email,
+        first_name: representative.first_name,
+        is_signer: representative.is_signer,
+        last_name: representative.last_name,
+        job_title: representative.job_title,
+        ownership_percentage: representative.ownership_percentage
+          ? Math.round(representative.ownership_percentage)
+          : undefined,
+        passport_number: representative.passport_number,
+        phone: representative.phone,
+        residential_address: representative.residential_address,
+        residential_address2: representative.residential_address2,
+        residential_city: representative.residential_city,
+        residential_country: representative.residential_country,
+        residential_postal_code: representative.residential_postal_code,
+        residential_state_province_region:
+          representative.residential_state_province_region,
+        responsibility: representative.responsibility,
+        tax_number: representative.tax_number,
+      });
+
+      logger.info(
+        `[RoutefusionService] Created representative: ${result.createRepresentative}`
+      );
+      return result.createRepresentative;
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error creating representative: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Update a representative for a business entity
+   * Reference: https://docs.routefusion.com/reference/update-representative
+   */
+  async updateRepresentative(
+    input: UpdateRepresentativeInput
+  ): Promise<boolean> {
+    try {
+      const mutation = `
+        mutation updateRepresentative(
+          $id: UUID!
+          $document_expiration_date: DateTime
+          $document_issue_date: DateTime
+          $document_number: String
+          $citizenship: ISO3166_1
+          $date_of_birth: DateTime
+          $email: Email
+          $first_name: String
+          $is_signer: Boolean
+          $last_name: String
+          $job_title: String
+          $ownership_percentage: Int
+          $passport_number: String
+          $phone: String
+          $residential_address: String
+          $residential_address2: String
+          $residential_city: String
+          $residential_country: ISO3166_1
+          $residential_postal_code: PostalCode
+          $residential_state_province_region: String
+          $responsibility: String
+          $tax_number: TaxNumber
+        ) {
+          updateRepresentative(
+            id: $id
+            representative: {
+              document_expiration_date: $document_expiration_date
+              document_issue_date: $document_issue_date
+              document_number: $document_number
+              citizenship: $citizenship
+              date_of_birth: $date_of_birth
+              email: $email
+              first_name: $first_name
+              is_signer: $is_signer
+              last_name: $last_name
+              job_title: $job_title
+              ownership_percentage: $ownership_percentage
+              passport_number: $passport_number
+              phone: $phone
+              residential_address: $residential_address
+              residential_address2: $residential_address2
+              residential_city: $residential_city
+              residential_country: $residential_country
+              residential_postal_code: $residential_postal_code
+              residential_state_province_region: $residential_state_province_region
+              responsibility: $responsibility
+              tax_number: $tax_number
+            }
+          )
+        }
+      `;
+
+      const { updateRepresentativeId, representative } = input;
+      const result = await this.executeGraphQL<{
+        updateRepresentative: boolean;
+      }>(mutation, {
+        id: updateRepresentativeId,
+        document_expiration_date: representative.document_expiration_date,
+        document_issue_date: representative.document_issue_date,
+        document_number: representative.document_number,
+        citizenship: representative.citizenship,
+        date_of_birth: representative.date_of_birth,
+        email: representative.email,
+        first_name: representative.first_name,
+        is_signer: representative.is_signer,
+        last_name: representative.last_name,
+        job_title: representative.job_title,
+        ownership_percentage: representative.ownership_percentage
+          ? Math.round(representative.ownership_percentage)
+          : undefined,
+        passport_number: representative.passport_number,
+        phone: representative.phone,
+        residential_address: representative.residential_address,
+        residential_address2: representative.residential_address2,
+        residential_city: representative.residential_city,
+        residential_country: representative.residential_country,
+        residential_postal_code: representative.residential_postal_code,
+        residential_state_province_region:
+          representative.residential_state_province_region,
+        responsibility: representative.responsibility,
+        tax_number: representative.tax_number,
+      });
+
+      logger.info(
+        `[RoutefusionService] Updated representative: ${result.updateRepresentative}`
+      );
+      return result.updateRepresentative;
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error updating representative: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a representative from an entity
+   * This may only be done before finalizing the entity.
+   * Reference: https://docs.routefusion.com/reference/delete-representative
+   */
+  async deleteRepresentative(representativeId: string): Promise<boolean> {
+    try {
+      const mutation = `
+        mutation deleteRepresentative($deleteRepresentativeId: UUID!) {
+          deleteRepresentative(id: $deleteRepresentativeId)
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        deleteRepresentative: boolean;
+      }>(mutation, {
+        deleteRepresentativeId: representativeId,
+      });
+
+      logger.info(
+        `[RoutefusionService] Deleted representative: ${representativeId}`
+      );
+      return result.deleteRepresentative;
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error deleting representative: ${error}`
+      );
       throw error;
     }
   }
@@ -704,5 +996,112 @@ export class RoutefusionService {
     });
 
     return result.entity;
+  }
+
+  /**
+   * Get required fields for an entity based on country, entity type, and business type
+   * Reference: https://docs.routefusion.com/reference/entity-required-fields
+   */
+  async getEntityRequiredFields(
+    input?: EntityRequiredFieldsQueryInput
+  ): Promise<EntityRequiredFields> {
+    try {
+      const query = `
+        query entityRequiredFields(
+          $country: ISO3166_1
+          $entity_type: EntityType
+          $business_type: BusinessType
+        ) {
+          entityRequiredFields(
+            country: $country
+            entity_type: $entity_type
+            business_type: $business_type
+          ) {
+            requires_representatives
+            documents {
+              enum
+              type
+            }
+            fields {
+              variable
+              regex
+              example
+              enum
+            }
+          }
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        entityRequiredFields: EntityRequiredFields;
+      }>(query, {
+        country: input?.country,
+        entity_type: input?.entity_type,
+        business_type: input?.business_type,
+      });
+
+      logger.info(
+        `[RoutefusionService] Retrieved entity required fields`
+      );
+      return result.entityRequiredFields;
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error getting entity required fields: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Get required fields for a representative based on country, entity type, and business type
+   * Reference: https://docs.routefusion.com/reference/representative-required-fields
+   */
+  async getRepresentativeRequiredFields(
+    input?: RepresentativeRequiredFieldsQueryInput
+  ): Promise<RepresentativeRequiredFields> {
+    try {
+      const query = `
+        query representativeRequiredFields(
+          $country: ISO3166_1
+          $entity_type: EntityType
+          $business_type: BusinessType
+        ) {
+          representativeRequiredFields(
+            country: $country
+            entity_type: $entity_type
+            business_type: $business_type
+          ) {
+            documents {
+              enum
+              type
+            }
+            fields {
+              variable
+              regex
+              example
+              enum
+            }
+          }
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        representativeRequiredFields: RepresentativeRequiredFields;
+      }>(query, {
+        country: input?.country,
+        entity_type: input?.entity_type,
+        business_type: input?.business_type,
+      });
+
+      logger.info(
+        `[RoutefusionService] Retrieved representative required fields`
+      );
+      return result.representativeRequiredFields;
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error getting representative required fields: ${error}`
+      );
+      throw error;
+    }
   }
 }

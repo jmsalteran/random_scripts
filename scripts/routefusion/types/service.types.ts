@@ -3,8 +3,7 @@
  * Types used by the RoutefusionService class
  */
 import * as cc from 'currency-codes-ts';
-import { Entity, EntityState, FileEnum } from "./entity.types";
-import { UUID } from "./entity.types";
+import { Entity, EntityState, FileEnum, UUID, DateTime, ISO3166_1, Email, PostalCode, TaxNumber } from "./entity.types";
 
 // ============================================================================
 // GRAPHQL RESPONSE TYPES
@@ -223,7 +222,77 @@ export interface UploadBusinessEntityDocumentInput {
   file_enum: FileEnum | string; // File enum type (use FileEnum for type safety)
 }
 
+export interface UploadRepresentativeDocumentInput {
+  representativeId: UUID;
+  file: any; // Upload type (File, Blob, or stream)
+  file_enum: FileEnum | string; // File enum type (use FileEnum for type safety)
+}
+
 export interface UploadDocumentResponse {
   filename: string;
+}
+
+export enum RepresentativeResponsibility {
+  ULTIMATE_BENEFICIAL_OWNER = "ultimate_beneficial_owner",
+  AUTHORIZED_REP = "authorized rep",
+  DIRECTOR = "director",
+}
+
+// ============================================================================
+// REPRESENTATIVE TYPES
+// ============================================================================
+
+export interface CreateRepresentativeInput {
+  entity_id: UUID;
+  representative: {
+    document_expiration_date?: DateTime;
+    document_issue_date?: DateTime;
+    document_number?: string;
+    citizenship?: ISO3166_1;
+    date_of_birth?: DateTime;
+    email?: Email;
+    first_name?: string;
+    is_signer?: boolean;
+    last_name?: string;
+    job_title?: string;
+    ownership_percentage?: number; // Will be converted to Int in GraphQL
+    passport_number?: string;
+    phone?: string;
+    residential_address?: string;
+    residential_address2?: string;
+    residential_city?: string;
+    residential_country?: ISO3166_1;
+    residential_postal_code?: PostalCode;
+    residential_state_province_region?: string;
+    responsibility?: RepresentativeResponsibility; // See enum below
+    tax_number?: TaxNumber;
+  };
+}
+
+export interface UpdateRepresentativeInput {
+  updateRepresentativeId: UUID;
+  representative: {
+    document_expiration_date?: DateTime;
+    document_issue_date?: DateTime;
+    document_number?: string;
+    citizenship?: ISO3166_1;
+    date_of_birth?: DateTime;
+    email?: Email;
+    first_name?: string;
+    is_signer?: boolean;
+    last_name?: string;
+    job_title?: string;
+    ownership_percentage?: number; // Int in GraphQL
+    passport_number?: string;
+    phone?: string;
+    residential_address?: string;
+    residential_address2?: string;
+    residential_city?: string;
+    residential_country?: ISO3166_1;
+    residential_postal_code?: PostalCode;
+    residential_state_province_region?: string;
+    responsibility?: string; // Can be: "ultimate_beneficial_owner", "authorized rep", "director"
+    tax_number?: TaxNumber;
+  };
 }
 

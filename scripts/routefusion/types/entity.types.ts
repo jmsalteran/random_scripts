@@ -428,6 +428,12 @@ export interface EntityRequiredFieldsQueryInput {
   business_type?: BusinessType;
 }
 
+export interface RepresentativeRequiredFieldsQueryInput {
+  country?: ISO3166_1;
+  entity_type?: EntityType;
+  business_type?: BusinessType;
+}
+
 export interface UserEntitiesQueryInput {
   user_id: UUID;
   search_terms?: string;
