@@ -1140,7 +1140,6 @@ export class RoutefusionService {
   async validateBusinessEntityDataToSubmit(input: any, country: ISO3166_1, entity_type: EntityType, business_type: BusinessType): Promise<EntityValidationResult> {
     try {
       const requiredFields = await this.getEntityRequiredFields({ country, entity_type, business_type });
-
       const errors = [];
 
       for (const field of requiredFields.fields) {

@@ -423,20 +423,16 @@ async function testCompleteOnboardingFlow() {
     } else {
       const fileBuffer = fs.readFileSync(filePath);
       const file = new Blob([fileBuffer], { type: "text/plain" });
-      const document = await routefusionService.uploadEntityDocument({
-        entityId: entityId as UUID,
-        file: file,
-        file_enum: FileEnum.PROOF_OF_REGISTRATION,
-      });
-      console.log("Business document uploaded:", document.filename);
+      const fileTypes = [FileEnum.PROOF_OF_REGISTRATION, FileEnum.PROOF_OF_OWNERSHIP, FileEnum.BANK_STATEMENT];
+      for (const fileType of fileTypes) {
+        const document = await routefusionService.uploadEntityDocument({
+          entityId: entityId as UUID,
+          file: file,
+          file_enum: fileType,
+        });
+        console.log("Business document uploaded:", document.filename);
+      }
     }
-
-    // Step 4: Query representative required fields (if representatives are required)
-    console.log("\nStep 4: Getting representative required fields...");
-    const repRequiredFields = await routefusionService.getRepresentativeRequiredFields({
-      country: "CO",
-    });
-    console.log("Representative required fields retrieved");
 
     // Step 5: Create representative
     console.log("\nStep 5: Creating representative...");
@@ -466,6 +462,11 @@ async function testCompleteOnboardingFlow() {
         tax_number: "1234567890",
       },
     };
+    const validationResultRepresentative = await routefusionService.validateRepresentativeDataToSubmit(representativeData.representative, "CO", EntityType.BUSINESS, BusinessType.LIMITED_LIABILITY_COMPANY);
+    if (!validationResultRepresentative.success) {
+      console.log("Validation failed:", validationResult.errors);
+      return;
+    }
     const representativeId = await routefusionService.createRepresentative(representativeData);
     console.log("Representative created with ID:", representativeId);
 
@@ -474,12 +475,15 @@ async function testCompleteOnboardingFlow() {
     if (fs.existsSync(filePath)) {
       const fileBuffer = fs.readFileSync(filePath);
       const file = new Blob([fileBuffer], { type: "text/plain" });
-      const repDocument = await routefusionService.uploadRepresentativeDocument({
-        representativeId: representativeId as UUID,
-        file: file,
-        file_enum: FileEnum.PASSPORT,
-      });
-      console.log("Representative document uploaded:", repDocument.filename);
+      const fileTypes = [FileEnum.PASSPORT, FileEnum.PROOF_OF_ADDRESS, FileEnum.LIVENESS_CHECK];
+      for (const fileType of fileTypes) {
+        const repDocument = await routefusionService.uploadRepresentativeDocument({
+          representativeId: representativeId as UUID,
+          file: file,
+          file_enum: fileType,
+        });
+        console.log("Representative document uploaded:", repDocument.filename);
+      }
     } else {
       console.log("Test file not found, skipping representative document upload");
     }
