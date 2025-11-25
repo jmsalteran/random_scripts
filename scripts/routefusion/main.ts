@@ -383,7 +383,7 @@ async function testCompleteOnboardingFlow() {
     console.log("\nStep 2: Creating business entity...");
     const entityData: CreateBusinessEntityInput = {
       email: `test${Date.now()}@example.com`,
-      phone: "3563525448",
+      phone: "+573563525448",
       tax_number: "1234567890",
       contact_first_name: "John",
       contact_last_name: "Doe",
@@ -442,7 +442,7 @@ async function testCompleteOnboardingFlow() {
         first_name: "John",
         last_name: "Doe",
         email: "john.doe@example.com",
-        phone: "3563525448",
+        phone: "+573563525448",
         date_of_birth: "1985-05-15T00:00:00Z",
         citizenship: "CO",
         residential_address: "456 Oak Avenue",
@@ -632,10 +632,10 @@ async function main() {
   //await testGetRepresentativeRequiredFields();
 
   // Complete onboarding flow test
-  //await testCompleteOnboardingFlow();
+  await testCompleteOnboardingFlow();
 
   //await testValidateBusinessEntityDataToSubmit();
-  await testValidateRepresentativeDataToSubmit(businessId);
+  //await testValidateRepresentativeDataToSubmit(businessId);
 }
 
 main()
