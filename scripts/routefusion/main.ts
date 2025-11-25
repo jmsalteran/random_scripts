@@ -552,6 +552,62 @@ async function testValidateBusinessEntityDataToSubmit() {
   }
 }
 
+
+async function testValidateRepresentativeDataToSubmit(entityId: string) {
+  try {
+    const representativeData: CreateRepresentativeInput = {
+      entity_id: entityId as UUID,
+      representative: {
+        // Personal Information
+        first_name: "John",
+        last_name: "Doe",
+        email: "test@example.com",
+        phone: "573563525448",
+        date_of_birth: "1985-05-15T00:00:00Z",
+        citizenship: "CO",
+
+        // Address Information
+        residential_address: "456 Oak Avenue",
+        residential_address2: "Apt 5B",
+        residential_city: "Bogota",
+        residential_state_province_region: "Cundinamarca",
+        residential_postal_code: "510004",
+        residential_country: "CO",
+
+        // Role and Responsibilities
+        responsibility: RepresentativeResponsibility.DIRECTOR,
+        is_signer: true,
+        job_title: "Chief Executive Officer",
+        ownership_percentage: 50.5,
+
+        // Document Information
+        document_number: "DL123456789",
+        document_issue_date: "2020-01-15T00:00:00Z",
+        document_expiration_date: "2033-01-15T00:00:00Z",
+        passport_number: "P123456789",
+
+        // Tax Information
+        tax_number: "1234567890",
+      },
+    };
+
+    const country = "CO";
+    const entity_type = EntityType.BUSINESS;
+    const business_type = BusinessType.LIMITED_LIABILITY_COMPANY;
+    const routefusionService = new RoutefusionService();
+    const result = await routefusionService.validateRepresentativeDataToSubmit(representativeData.representative, country, entity_type, business_type);
+    console.log("Validation result:", JSON.stringify(result, null, 2));
+  } catch (error) {
+    console.error("\nError occurred during test:");
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+  }
+}
+
 async function main() {
   const representativeId = 'c479de98-7420-4a64-b7d3-45889e66d955';
   const businessId = '34354c4e-d88f-458a-b9ce-45772447730d';
@@ -574,7 +630,8 @@ async function main() {
   // Complete onboarding flow test
   //await testCompleteOnboardingFlow();
 
-  await testValidateBusinessEntityDataToSubmit();
+  //await testValidateBusinessEntityDataToSubmit();
+  await testValidateRepresentativeDataToSubmit(businessId);
 }
 
 main()

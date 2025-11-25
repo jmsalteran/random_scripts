@@ -11,6 +11,7 @@ import {
   EntityRequiredFieldsQueryInput,
   RepresentativeRequiredFieldsQueryInput,
   EntityValidationResult,
+  RepresentativeValidationResult,
   BusinessType,
   EntityType,
   ISO3166_1,
@@ -1092,6 +1093,50 @@ export class RoutefusionService {
     }
   }
 
+  /**
+   * Normalize regex pattern from API response
+   * Handles regex with delimiters (/pattern/ or /pattern/flags) or without delimiters
+   * Also handles escaped slashes within the pattern
+   */
+  private normalizeRegexPattern(regexString: string): string {
+    if (!regexString) return regexString;
+
+    let cleanRegex = regexString.trim();
+
+    // Check if regex has delimiters (starts with /)
+    if (cleanRegex.startsWith('/')) {
+      // Find the last unescaped / (delimiter, not part of pattern)
+      // Start from the end and work backwards to find the closing delimiter
+      let lastSlashIndex = -1;
+      for (let i = cleanRegex.length - 1; i > 0; i--) {
+        if (cleanRegex[i] === '/') {
+          // Check if it's escaped (odd number of backslashes before it)
+          let backslashCount = 0;
+          for (let j = i - 1; j >= 0 && cleanRegex[j] === '\\'; j--) {
+            backslashCount++;
+          }
+          // If even number of backslashes (or zero), it's not escaped
+          if (backslashCount % 2 === 0) {
+            lastSlashIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (lastSlashIndex > 0) {
+        // Extract pattern (between first / and last unescaped /)
+        cleanRegex = cleanRegex.slice(1, lastSlashIndex);
+        // Flags (if any) are after the last /, but we ignore them for validation
+        // as we'll use the pattern with ^ and $ anchors
+      } else {
+        // No closing delimiter found, remove only the opening /
+        cleanRegex = cleanRegex.slice(1);
+      }
+    }
+
+    return cleanRegex;
+  }
+
   async validateBusinessEntityDataToSubmit(input: any, country: ISO3166_1, entity_type: EntityType, business_type: BusinessType): Promise<EntityValidationResult> {
     try {
       const requiredFields = await this.getEntityRequiredFields({ country, entity_type, business_type });
@@ -1102,11 +1147,19 @@ export class RoutefusionService {
         if (!input[field.variable]) {
           errors.push(`Field ${field.variable} is required`);
         }
-        const regexPattern = field.regex ? `^${field.regex}$` : null;
-        const valRegex = regexPattern ? new RegExp(regexPattern).test(input[field.variable]) : true;
-        //logger.info(`[RoutefusionService] Validation regex: ${field.variable} - ${field.regex} - ${valRegex}`);
-        if (field.regex && !valRegex) {
-          errors.push(`Field ${field.variable} it is not valid`);
+        if (field.regex) {
+          const cleanRegex = this.normalizeRegexPattern(field.regex);
+          const regexPattern = `^${cleanRegex}$`;
+          try {
+            const valRegex = new RegExp(regexPattern).test(input[field.variable]);
+            //logger.info(`[RoutefusionService] Validation regex: ${field.variable} - ${field.regex} - ${valRegex}`);
+            if (!valRegex) {
+              errors.push(`Field ${field.variable} it is not valid`);
+            }
+          } catch (regexError) {
+            logger.error(`[RoutefusionService] Invalid regex pattern for ${field.variable}: ${field.regex} - ${regexError}`);
+            errors.push(`Field ${field.variable} has invalid regex pattern`);
+          }
         }
       }
       if (errors.length > 0) {
@@ -1115,6 +1168,41 @@ export class RoutefusionService {
         return { success: true, errors: [] };
       }
 
+    } catch (error) {
+      logger.error(`[RoutefusionService] Error validating data to submit: ${error}`);
+      throw error;
+    }
+  }
+
+  async validateRepresentativeDataToSubmit(input: any, country: ISO3166_1, entity_type: EntityType, business_type: BusinessType): Promise<RepresentativeValidationResult> {
+    try {
+      const requiredFields = await this.getRepresentativeRequiredFields({ country, entity_type, business_type });
+      const errors = [];
+
+      for (const field of requiredFields.fields) {
+        if (!input[field.variable]) {
+          errors.push(`Field ${field.variable} is required`);
+        }
+        if (field.regex) {
+          const cleanRegex = this.normalizeRegexPattern(field.regex);
+          const regexPattern = `^${cleanRegex}$`;
+          try {
+            const valRegex = new RegExp(regexPattern).test(input[field.variable]);
+            //logger.info(`[RoutefusionService] Validation regex: ${field.variable} - ${field.regex} - ${valRegex}`);
+            if (!valRegex) {
+              errors.push(`Field ${field.variable} it is not valid`);
+            }
+          } catch (regexError) {
+            logger.error(`[RoutefusionService] Invalid regex pattern for ${field.variable}: ${field.regex} - ${regexError}`);
+            errors.push(`Field ${field.variable} has invalid regex pattern`);
+          }
+        }
+      }
+      if (errors.length > 0) {
+        return { success: false, errors };
+      } else {
+        return { success: true, errors: [] };
+      }
     } catch (error) {
       logger.error(`[RoutefusionService] Error validating data to submit: ${error}`);
       throw error;
