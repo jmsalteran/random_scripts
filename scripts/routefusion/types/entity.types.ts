@@ -12,6 +12,11 @@ export enum EntityType {
   BUSINESS = "business",
 }
 
+export interface EntityValidationResult {
+  success: boolean;
+  errors: string[];
+}
+
 export enum BusinessType {
   B_CORPORATION = "b_corporation",
   C_CORPORATION = "c_corporation",

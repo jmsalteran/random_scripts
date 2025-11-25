@@ -3,7 +3,6 @@ import { logger } from "../../shared/utils/logger";
 import {
   CreateBusinessEntityInput,
   Entity,
-  BusinessType,
   CreateUserInput,
   RoutefusionBusiness,
   RoutefusionUser,
@@ -11,6 +10,10 @@ import {
   RepresentativeRequiredFields,
   EntityRequiredFieldsQueryInput,
   RepresentativeRequiredFieldsQueryInput,
+  EntityValidationResult,
+  BusinessType,
+  EntityType,
+  ISO3166_1,
 } from "./types/entity.types";
 import {
   CreateWalletInput,
@@ -1085,6 +1088,35 @@ export class RoutefusionService {
       logger.error(
         `[RoutefusionService] Error getting representative required fields: ${error}`
       );
+      throw error;
+    }
+  }
+
+  async validateBusinessEntityDataToSubmit(input: any, country: ISO3166_1, entity_type: EntityType, business_type: BusinessType): Promise<EntityValidationResult> {
+    try {
+      const requiredFields = await this.getEntityRequiredFields({ country, entity_type, business_type });
+
+      const errors = [];
+
+      for (const field of requiredFields.fields) {
+        if (!input[field.variable]) {
+          errors.push(`Field ${field.variable} is required`);
+        }
+        const regexPattern = field.regex ? `^${field.regex}$` : null;
+        const valRegex = regexPattern ? new RegExp(regexPattern).test(input[field.variable]) : true;
+        //logger.info(`[RoutefusionService] Validation regex: ${field.variable} - ${field.regex} - ${valRegex}`);
+        if (field.regex && !valRegex) {
+          errors.push(`Field ${field.variable} it is not valid`);
+        }
+      }
+      if (errors.length > 0) {
+        return { success: false, errors };
+      } else {
+        return { success: true, errors: [] };
+      }
+
+    } catch (error) {
+      logger.error(`[RoutefusionService] Error validating data to submit: ${error}`);
       throw error;
     }
   }
