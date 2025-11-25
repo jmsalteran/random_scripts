@@ -200,20 +200,20 @@ async function testCreateRepresentative(entityId: string) {
       entity_id: entityId as UUID,
       representative: {
         // Personal Information
-        first_name: "Jane",
-        last_name: "Smith",
-        email: "jane.smith@example.com",
-        //phone: "+1231256423",
+        first_name: "John",
+        last_name: "Doe",
+        email: "test@example.com",
+        phone: "573563525448",
         date_of_birth: "1985-05-15T00:00:00Z",
-        citizenship: "US",
+        citizenship: "CO",
 
         // Address Information
         residential_address: "456 Oak Avenue",
         residential_address2: "Apt 5B",
-        residential_city: "Los Angeles",
-        residential_state_province_region: "CA",
-        residential_postal_code: "90001",
-        residential_country: "US",
+        residential_city: "Bogota",
+        residential_state_province_region: "Cundinamarca",
+        residential_postal_code: "510004",
+        residential_country: "CO",
 
         // Role and Responsibilities
         responsibility: RepresentativeResponsibility.DIRECTOR,
@@ -228,7 +228,7 @@ async function testCreateRepresentative(entityId: string) {
         passport_number: "P123456789",
 
         // Tax Information
-        tax_number: "123-45-6789",
+        tax_number: "1234567890",
       },
     };
 
@@ -375,7 +375,7 @@ async function testGetEntityRequiredFields() {
     console.log("-----------------------------------------------------");
     const routefusionService = new RoutefusionService();
     const requiredFields = await routefusionService.getEntityRequiredFields({
-      country: "US",
+      country: "CO",
       entity_type: EntityType.BUSINESS,
       business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
     });
@@ -400,13 +400,166 @@ async function testGetRepresentativeRequiredFields() {
     const routefusionService = new RoutefusionService();
     const requiredFields = await routefusionService.getRepresentativeRequiredFields({
       country: "US",
-      entity_type: EntityType.BUSINESS,
-      business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
     });
     console.log("\n✅ Successfully got representative required fields!");
     console.log("Required Fields:", JSON.stringify(requiredFields, null, 2));
   } catch (error) {
     console.error("\n❌ Error occurred during test:");
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Test the complete onboarding flow:
+ * 1. query entityRequiredFields
+ * 2. mutation createBusinessEntity
+ * 3. add Business document
+ * 4. query representativeRequiredFields
+ * 5. mutation createRepresentative
+ * 6. add representative document
+ * 7. mutation finalizeEntity
+ */
+async function testCompleteOnboardingFlow() {
+  try {
+    console.log("Testing Complete Onboarding Flow");
+    console.log("==================================");
+    const routefusionService = new RoutefusionService();
+
+    // Step 1: Query entity required fields
+    console.log("\n📋 Step 1: Getting entity required fields...");
+    const entityRequiredFields = await routefusionService.getEntityRequiredFields({
+      country: "CO",
+      entity_type: EntityType.BUSINESS,
+      business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
+    });
+    console.log("✅ Entity required fields retrieved");
+    console.log("   Requires representatives:", entityRequiredFields.requires_representatives);
+    console.log("   Required documents:", JSON.stringify(entityRequiredFields.documents, null, 2));
+    console.log("   Required fields:", entityRequiredFields.fields.map(f => f.variable).join(", "));
+
+    // Step 2: Create business entity
+    console.log("\n🏢 Step 2: Creating business entity...");
+    const entityData: CreateBusinessEntityInput = {
+      email: `test${Date.now()}@example.com`,
+      phone: "3563525448",
+      tax_number: "1234567890",
+      contact_first_name: "John",
+      contact_last_name: "Doe",
+      business_name: "Test Business LLC",
+      business_address1: "123 Main St",
+      business_country: "CO",
+      business_city: "Bogota",
+      business_state_province_region: "Cundinamarca",
+      business_postal_code: "510004",
+      business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
+      accept_terms_and_conditions: true,
+      naics_code: "111111",
+      business_description: "Test business description",
+      trading_symbol: "TEST",
+      owned_by: "John Doe",
+      incorporation_date: new Date().toISOString(),
+      website_url: "https://www.example.com",
+    };
+    const entityId = await routefusionService.createBusinessEntity(entityData);
+    console.log("✅ Business entity created with ID:", entityId);
+
+    // Step 3: Upload business document
+    console.log("\n📄 Step 3: Uploading business document...");
+    const projectRoot = path.resolve(__dirname, "../..");
+    const filePath = path.join(projectRoot, "test-document.txt");
+
+    if (!fs.existsSync(filePath)) {
+      console.log("⚠️  Test file not found, skipping document upload");
+    } else {
+      const fileBuffer = fs.readFileSync(filePath);
+      const file = new Blob([fileBuffer], { type: "text/plain" });
+      const document = await routefusionService.uploadEntityDocument({
+        entityId: entityId as UUID,
+        file: file,
+        file_enum: FileEnum.PROOF_OF_REGISTRATION,
+      });
+      console.log("✅ Business document uploaded:", document.filename);
+    }
+
+    // Step 4: Query representative required fields (if representatives are required)
+    if (entityRequiredFields.requires_representatives) {
+      console.log("\n👤 Step 4: Getting representative required fields...");
+      const repRequiredFields = await routefusionService.getRepresentativeRequiredFields({
+        country: "CO",
+      });
+      console.log("✅ Representative required fields retrieved");
+      console.log("   Required documents:", JSON.stringify(repRequiredFields.documents, null, 2));
+      console.log("   Required fields:", repRequiredFields.fields.map(f => f.variable).join(", "));
+
+      // Step 5: Create representative
+      console.log("\n👤 Step 5: Creating representative...");
+      const representativeData: CreateRepresentativeInput = {
+        entity_id: entityId as UUID,
+        representative: {
+          first_name: "John",
+          last_name: "Doe",
+          email: "john.doe@example.com",
+          phone: "3563525448",
+          date_of_birth: "1985-05-15T00:00:00Z",
+          citizenship: "CO",
+          residential_address: "456 Oak Avenue",
+          residential_address2: "Apt 5B",
+          residential_city: "Bogota",
+          residential_state_province_region: "Cundinamarca",
+          residential_postal_code: "510004",
+          residential_country: "CO",
+          responsibility: RepresentativeResponsibility.DIRECTOR,
+          is_signer: true,
+          job_title: "Chief Executive Officer",
+          ownership_percentage: 50.5,
+          document_number: "DL123456789",
+          document_issue_date: "2020-01-15T00:00:00Z",
+          document_expiration_date: "2033-01-15T00:00:00Z",
+          passport_number: "P123456789",
+          tax_number: "1234567890",
+        },
+      };
+      const representativeId = await routefusionService.createRepresentative(representativeData);
+      console.log("✅ Representative created with ID:", representativeId);
+
+      // Step 6: Upload representative document
+      console.log("\n📄 Step 6: Uploading representative document...");
+      if (fs.existsSync(filePath)) {
+        const fileBuffer = fs.readFileSync(filePath);
+        const file = new Blob([fileBuffer], { type: "text/plain" });
+        const repDocument = await routefusionService.uploadRepresentativeDocument({
+          representativeId: representativeId as UUID,
+          file: file,
+          file_enum: FileEnum.PASSPORT,
+        });
+        console.log("✅ Representative document uploaded:", repDocument.filename);
+      } else {
+        console.log("⚠️  Test file not found, skipping representative document upload");
+      }
+    } else {
+      console.log("\n⚠️  Step 4-6: Skipped (representatives not required for this entity type)");
+    }
+
+    // Step 7: Finalize entity
+    console.log("\n✅ Step 7: Finalizing entity...");
+    const finalizedEntityId = await routefusionService.finalizeEntity(entityId);
+    console.log("✅ Entity finalized successfully!");
+    console.log("   Finalized Entity ID:", finalizedEntityId);
+    console.log("\n🎉 Complete onboarding flow finished successfully!");
+    console.log("   Note: The entity will now move to a pending state for compliance review.");
+
+    return {
+      entityId,
+      finalized: true,
+    };
+  } catch (error) {
+    console.error("\n❌ Error occurred during onboarding flow:");
     if (error instanceof Error) {
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
@@ -429,12 +582,15 @@ async function main() {
   // await testCreateWallet("34354c4e-d88f-458a-b9ce-45772447730d");
   // await testUploadEntityDocument("34354c4e-d88f-458a-b9ce-45772447730d");
   //await testFinalizeEntity("34354c4e-d88f-458a-b9ce-45772447730d");
-  //await testCreateRepresentative(businessId);
+  //await testCreateRepresentative("c50e4a28-d19d-4b09-a09d-6f59977c1bc7" || businessId);
   //await testUpdateRepresentative(representativeId);
   //await testDeleteRepresentative(representativeId);
   //await testUploadRepresentativeDocument(representativeId);
-  //await testGetEntityRequiredFields();
+  await testGetEntityRequiredFields();
   //await testGetRepresentativeRequiredFields();
+
+  // Complete onboarding flow test
+  //await testCompleteOnboardingFlow();
 
 }
 

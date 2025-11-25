@@ -241,32 +241,35 @@ export enum RepresentativeResponsibility {
 // ============================================================================
 // REPRESENTATIVE TYPES
 // ============================================================================
+export interface RepresentativeInput {
+  document_expiration_date?: DateTime;
+  document_issue_date?: DateTime;
+  document_number?: string;
+  citizenship: ISO3166_1;
+  date_of_birth: DateTime;
+  email: Email;
+  first_name: string;
+  is_signer?: boolean;
+  last_name: string;
+  job_title?: string;
+  ownership_percentage?: number; // Will be converted to Int in GraphQL
+  passport_number?: string;
+  phone: string;
+  residential_address: string;
+  residential_address2?: string;
+  residential_city: string;
+  residential_country: ISO3166_1;
+  residential_postal_code: PostalCode;
+  residential_state_province_region: string;
+  responsibility: RepresentativeResponsibility; // See enum below
+  tax_number: TaxNumber;
+}
+
+
 
 export interface CreateRepresentativeInput {
   entity_id: UUID;
-  representative: {
-    document_expiration_date?: DateTime;
-    document_issue_date?: DateTime;
-    document_number?: string;
-    citizenship?: ISO3166_1;
-    date_of_birth?: DateTime;
-    email?: Email;
-    first_name?: string;
-    is_signer?: boolean;
-    last_name?: string;
-    job_title?: string;
-    ownership_percentage?: number; // Will be converted to Int in GraphQL
-    passport_number?: string;
-    phone?: string;
-    residential_address?: string;
-    residential_address2?: string;
-    residential_city?: string;
-    residential_country?: ISO3166_1;
-    residential_postal_code?: PostalCode;
-    residential_state_province_region?: string;
-    responsibility?: RepresentativeResponsibility; // See enum below
-    tax_number?: TaxNumber;
-  };
+  representative: RepresentativeInput;
 }
 
 export interface UpdateRepresentativeInput {

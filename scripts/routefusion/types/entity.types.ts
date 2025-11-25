@@ -357,28 +357,28 @@ export interface CreateUserInput {
 export interface CreateBusinessEntityInput {
   user_id?: UUID;
   email: Email;
-  phone?: string;
+  phone: string;
   phone_country?: string;
   contact_first_name: string;
-  business_type?: BusinessType;
+  business_type: BusinessType;
   business_name: string;
   business_address1: string;
   contact_last_name: string;
   business_address2?: string;
-  business_city?: string;
-  business_state_province_region?: string;
-  business_postal_code?: PostalCode;
+  business_city: string;
+  business_state_province_region: string;
+  business_postal_code: PostalCode;
   business_country: ISO3166_1;
-  tax_number?: TaxNumber;
+  tax_number: TaxNumber;
   accept_terms_and_conditions: boolean;
   naics_code?: NAICS;
   business_description?: string;
   trading_symbol?: string;
   owned_by?: string;
-  incorporation_date?: DateTime;
+  incorporation_date: DateTime;
   average_monthly_transaction_count?: string;
   average_monthly_volume?: string;
-  website_url?: string;
+  website_url: string;
 }
 
 export interface UpdateBusinessEntityInput {

@@ -55,16 +55,6 @@ export class RoutefusionService {
     variables?: Record<string, any>
   ): Promise<T> {
     try {
-      if (variables) {
-        logger.debug(
-          `[RoutefusionService] Variables: ${JSON.stringify(
-            variables,
-            null,
-            2
-          )}`
-        );
-      }
-
       const response = await fetch(this.baseURL, {
         method: "POST",
         headers: {
@@ -1063,13 +1053,9 @@ export class RoutefusionService {
       const query = `
         query representativeRequiredFields(
           $country: ISO3166_1
-          $entity_type: EntityType
-          $business_type: BusinessType
         ) {
           representativeRequiredFields(
             country: $country
-            entity_type: $entity_type
-            business_type: $business_type
           ) {
             documents {
               enum
@@ -1089,8 +1075,6 @@ export class RoutefusionService {
         representativeRequiredFields: RepresentativeRequiredFields;
       }>(query, {
         country: input?.country,
-        entity_type: input?.entity_type,
-        business_type: input?.business_type,
       });
 
       logger.info(
