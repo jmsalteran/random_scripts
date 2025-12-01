@@ -175,6 +175,11 @@ export interface CreateWalletInput {
   currency: ISO4217;
 }
 
+export interface AddBalanceToWalletInput {
+  wallet_id: UUID;
+  amount: string;
+}
+
 export interface Wallet {
   id: string;
   entity_id: string;
@@ -198,6 +203,24 @@ export interface VirtualAccount {
   account_number?: string;
   routing_number?: string;
   currency?: string;
+}
+
+// ============================================================================
+// TRANSFER TYPES
+// ============================================================================
+
+export interface CreateTransferInput {
+  user_id: UUID;
+  entity_id: UUID;
+  source_amount?: string;
+  wallet_id?: UUID;
+  destination_amount?: string;
+  account_id?: UUID;
+  beneficiary_id: UUID;
+  purpose_of_payment: string;
+  reference?: string;
+  wire?: boolean;
+  document_reference?: string;
 }
 
 // ============================================================================

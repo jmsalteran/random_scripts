@@ -110,6 +110,65 @@ async function testCreateWallet(businessIdParam: string) {
   }
 }
 
+async function testAddBalanceToWallet(walletIdParam: string, amount?: string) {
+  try {
+    const walletId = walletIdParam || 'your-wallet-id-here' as UUID;
+    const balanceAmount = amount || '100.00';
+    const routefusionService = new RoutefusionService();
+    const result = await routefusionService.addBalanceToWallet({
+      wallet_id: walletId as UUID,
+      amount: balanceAmount,
+    });
+    console.log(`Balance added to wallet ${walletId}:`, result);
+    console.log(`Amount added: ${balanceAmount}`);
+  } catch (error) {
+    console.error("\nError occurred during test:");
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    throw error;
+  }
+}
+
+async function testCreateTransfer(
+  userIdParam: string,
+  entityIdParam: string,
+  beneficiaryIdParam: string,
+  walletIdParam?: string
+) {
+  try {
+    const userId = userIdParam || 'your-user-id-here' as UUID;
+    const entityId = entityIdParam || 'your-entity-id-here' as UUID;
+    const beneficiaryId = beneficiaryIdParam || 'your-beneficiary-id-here' as UUID;
+    const walletId = walletIdParam as UUID | undefined;
+
+    const routefusionService = new RoutefusionService();
+    const transferId = await routefusionService.createTransfer({
+      user_id: userId as UUID,
+      entity_id: entityId as UUID,
+      beneficiary_id: beneficiaryId as UUID,
+      purpose_of_payment: "Payment for services",
+      source_amount: "100.00",
+      wallet_id: walletId,
+      reference: `Test transfer ${Date.now()}`,
+    });
+    console.log("Transfer created. Transfer ID:", transferId);
+    console.log("Note: Use finalizeTransfer to initiate the transfer.");
+  } catch (error) {
+    console.error("\nError occurred during test:");
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    throw error;
+  }
+}
+
 async function testUploadEntityDocument(entityId: string) {
   try {
     const routefusionService = new RoutefusionService();
@@ -615,6 +674,9 @@ async function testValidateRepresentativeDataToSubmit(entityId: string) {
 async function main() {
   const representativeId = 'c479de98-7420-4a64-b7d3-45889e66d955';
   const businessId = '34354c4e-d88f-458a-b9ce-45772447730d';
+  const walletId = '5b23b460-c0a7-49b4-9b95-649749ca3db5';
+  const userId = 'b5fa316d-7d79-442f-a139-faaa7cfa80de';
+  const beneficiaryId = 'your-beneficiary-id-here';
 
 
   //await testCreateBusinessEntity(); //4354c4e-d88f-458a-b9ce-45772447730d
@@ -622,6 +684,8 @@ async function main() {
   // await testGetUser();
   // await testGetBusinessEntity();
   // await testCreateWallet("34354c4e-d88f-458a-b9ce-45772447730d");
+  // await testAddBalanceToWallet(walletId, "100.00");
+  // NOT WORKINGawait testCreateTransfer(userId, businessId, beneficiaryId, walletId);
   // await testUploadEntityDocument("34354c4e-d88f-458a-b9ce-45772447730d");
   //await testFinalizeEntity("34354c4e-d88f-458a-b9ce-45772447730d");
   //await testCreateRepresentative("c50e4a28-d19d-4b09-a09d-6f59977c1bc7" || businessId);
@@ -632,7 +696,7 @@ async function main() {
   //await testGetRepresentativeRequiredFields();
 
   // Complete onboarding flow test
-  await testCompleteOnboardingFlow();
+  // await testCompleteOnboardingFlow();
 
   //await testValidateBusinessEntityDataToSubmit();
   //await testValidateRepresentativeDataToSubmit(businessId);

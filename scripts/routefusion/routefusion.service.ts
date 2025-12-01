@@ -18,7 +18,9 @@ import {
 } from "./types/entity.types";
 import {
   CreateWalletInput,
+  AddBalanceToWalletInput,
   CreateVirtualAccountInput,
+  CreateTransferInput,
   GraphQLResponse,
   Wallet,
   VirtualAccount,
@@ -815,6 +817,108 @@ export class RoutefusionService {
       return wallet;
     } catch (error) {
       logger.error(`[RoutefusionService] Error creating wallet: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Add balance to a wallet
+   * Reference: https://docs.routefusion.com/reference/mutations-6
+   */
+  async addBalanceToWallet(input: AddBalanceToWalletInput): Promise<boolean> {
+    try {
+      const mutation = `
+        mutation addBalanceToWallet(
+          $wallet_id: UUID!
+          $amount: String!
+        ) {
+          addBalanceToWallet(
+            wallet_id: $wallet_id
+            amount: $amount
+          )
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        addBalanceToWallet: boolean;
+      }>(mutation, {
+        wallet_id: input.wallet_id,
+        amount: input.amount,
+      });
+
+      logger.info(
+        `[RoutefusionService] Added balance ${input.amount} to wallet ${input.wallet_id}`
+      );
+      return result.addBalanceToWallet;
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error adding balance to wallet: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Create a transfer
+   * This mutation accepts initial data for transfer. This does not initiate the transfer.
+   * After using createTransfer, the next step is to use finalizeTransfer to initiate the transfer.
+   * Reference: https://docs.routefusion.com/reference/create-transfer
+   */
+  async createTransfer(input: CreateTransferInput): Promise<string> {
+    try {
+      const mutation = `
+        mutation createTransfer(
+          $user_id: UUID!
+          $entity_id: UUID!
+          $source_amount: String
+          $wallet_id: UUID
+          $destination_amount: String
+          $account_id: UUID
+          $beneficiary_id: UUID!
+          $purpose_of_payment: String!
+          $reference: String
+          $wire: Boolean
+          $document_reference: String
+        ) {
+          createTransfer(
+            user_id: $user_id
+            entity_id: $entity_id
+            source_amount: $source_amount
+            wallet_id: $wallet_id
+            destination_amount: $destination_amount
+            account_id: $account_id
+            beneficiary_id: $beneficiary_id
+            purpose_of_payment: $purpose_of_payment
+            reference: $reference
+            wire: $wire
+            document_reference: $document_reference
+          )
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        createTransfer: string;
+      }>(mutation, {
+        user_id: input.user_id,
+        entity_id: input.entity_id,
+        source_amount: input.source_amount,
+        wallet_id: input.wallet_id,
+        destination_amount: input.destination_amount,
+        account_id: input.account_id,
+        beneficiary_id: input.beneficiary_id,
+        purpose_of_payment: input.purpose_of_payment,
+        reference: input.reference,
+        wire: input.wire,
+        document_reference: input.document_reference,
+      });
+
+      const transferId = result.createTransfer;
+      logger.info(
+        `[RoutefusionService] Created transfer with ID: ${transferId}`
+      );
+      return transferId;
+    } catch (error) {
+      logger.error(`[RoutefusionService] Error creating transfer: ${error}`);
       throw error;
     }
   }
