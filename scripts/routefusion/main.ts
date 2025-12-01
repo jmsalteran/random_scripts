@@ -685,7 +685,7 @@ async function main() {
   // await testGetBusinessEntity();
   // await testCreateWallet("34354c4e-d88f-458a-b9ce-45772447730d");
   // await testAddBalanceToWallet(walletId, "100.00");
-  // NOT WORKINGawait testCreateTransfer(userId, businessId, beneficiaryId, walletId);
+  // NOT WORKING await testCreateTransfer(userId, businessId, beneficiaryId, walletId);
   // await testUploadEntityDocument("34354c4e-d88f-458a-b9ce-45772447730d");
   //await testFinalizeEntity("34354c4e-d88f-458a-b9ce-45772447730d");
   //await testCreateRepresentative("c50e4a28-d19d-4b09-a09d-6f59977c1bc7" || businessId);
