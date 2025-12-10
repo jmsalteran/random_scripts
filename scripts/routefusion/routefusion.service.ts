@@ -31,6 +31,8 @@ import {
   UploadDocumentResponse,
   CreateRepresentativeInput,
   UpdateRepresentativeInput,
+  CreatePersonalBeneficiaryInput,
+  CreateBusinessBeneficiaryInput,
 } from "./types/service.types";
 
 export class RoutefusionService {
@@ -1308,6 +1310,184 @@ export class RoutefusionService {
       }
     } catch (error) {
       logger.error(`[RoutefusionService] Error validating data to submit: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a personal beneficiary
+   * Reference: https://docs.routefusion.com/reference/create-personal-beneficiary
+   */
+  async createPersonalBeneficiary(
+    input: CreatePersonalBeneficiaryInput
+  ): Promise<string> {
+    try {
+      const mutation = `
+        mutation createPersonalBeneficiary (
+          $user_id: UUID!
+          $entity_id: UUID!
+          $email: Email!
+          $phone: String
+          $phone_country: ISO3166_1
+          $first_name: String!
+          $last_name: String!
+          $address1: String
+          $address2: String
+          $city: String
+          $state_province_region: String
+          $postal_code: PostalCode
+          $country: ISO3166_1!
+          $tax_number: TaxNumber
+          $name_on_bank_account: String
+          $swift_bic: SwiftBic
+          $account_type: AccountType
+          $account_number: BankAccountNumber
+          $routing_code: BankRoutingCode
+          $currency: ISO4217!
+          $bank_name: String
+          $branch_name: String
+          $bank_address1: String
+          $bank_address2: String
+          $bank_city: String
+          $bank_state_province_region: String
+          $bank_postal_code: PostalCode
+          $bank_country: ISO3166_1!
+          $tax_number_expiration: DateTime
+          $date_of_birth: DateTime
+        ) {
+          createPersonalBeneficiary (
+            user_id: $user_id
+            entity_id: $entity_id
+            email: $email
+            phone: $phone
+            phone_country: $phone_country
+            first_name: $first_name
+            last_name: $last_name
+            address1: $address1
+            address2: $address2
+            city: $city
+            state_province_region: $state_province_region
+            postal_code: $postal_code
+            country: $country
+            tax_number: $tax_number
+            name_on_bank_account: $name_on_bank_account
+            swift_bic: $swift_bic
+            account_type: $account_type
+            account_number: $account_number
+            routing_code: $routing_code
+            currency: $currency
+            bank_name: $bank_name
+            branch_name: $branch_name
+            bank_address1: $bank_address1
+            bank_address2: $bank_address2
+            bank_city: $bank_city
+            bank_state_province_region: $bank_state_province_region
+            bank_postal_code: $bank_postal_code
+            bank_country: $bank_country
+            tax_number_expiration: $tax_number_expiration
+            date_of_birth: $date_of_birth
+          )
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        createPersonalBeneficiary: string;
+      }>(mutation, input);
+
+      console.log(
+        `[RoutefusionService] Created personal beneficiary: ${result.createPersonalBeneficiary}`
+      );
+      return result.createPersonalBeneficiary;
+    } catch (error) {
+      console.log(
+        `[RoutefusionService] Error creating personal beneficiary: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Create a business beneficiary
+   * Reference: https://docs.routefusion.com/reference/create-business-beneficiary
+   */
+  async createBusinessBeneficiary(
+    input: CreateBusinessBeneficiaryInput
+  ): Promise<string> {
+    try {
+      const mutation = `
+        mutation createBusinessBeneficiary (
+          $user_id: UUID!
+          $entity_id: UUID!
+          $email: Email!
+          $phone: String
+          $phone_country: ISO3166_1
+          $business_name: String!
+          $business_address1: String
+          $business_address2: String
+          $business_city: String
+          $business_state_province_region: String
+          $business_postal_code: PostalCode
+          $business_country: ISO3166_1!
+          $tax_number: TaxNumber
+          $name_on_bank_account: String
+          $swift_bic: SwiftBic
+          $account_type: AccountType
+          $account_number: BankAccountNumber
+          $routing_code: BankRoutingCode
+          $currency: ISO4217!
+          $bank_name: String
+          $branch_name: String
+          $bank_address1: String
+          $bank_address2: String
+          $bank_city: String
+          $bank_state_province_region: String
+          $bank_postal_code: PostalCode
+          $bank_country: ISO3166_1!
+        ) {
+          createBusinessBeneficiary (
+            user_id: $user_id
+            entity_id: $entity_id
+            email: $email
+            phone: $phone
+            phone_country: $phone_country
+            business_name: $business_name
+            business_address1: $business_address1
+            business_address2: $business_address2
+            business_city: $business_city
+            business_state_province_region: $business_state_province_region
+            business_postal_code: $business_postal_code
+            business_country: $business_country
+            tax_number: $tax_number
+            name_on_bank_account: $name_on_bank_account
+            swift_bic: $swift_bic
+            account_type: $account_type
+            account_number: $account_number
+            routing_code: $routing_code
+            currency: $currency
+            bank_name: $bank_name
+            branch_name: $branch_name
+            bank_address1: $bank_address1
+            bank_address2: $bank_address2
+            bank_city: $bank_city
+            bank_state_province_region: $bank_state_province_region
+            bank_postal_code: $bank_postal_code
+            bank_country: $bank_country
+          )
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        createBusinessBeneficiary: string;
+      }>(mutation, input);
+
+      console.log(
+        `[RoutefusionService] Created business beneficiary: ${result.createBusinessBeneficiary}`
+      );
+      return result.createBusinessBeneficiary;
+    } catch (error) {
+      console.log(
+        `[RoutefusionService] Error creating business beneficiary: ${error}`
+      );
       throw error;
     }
   }

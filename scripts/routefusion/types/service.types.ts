@@ -322,3 +322,87 @@ export interface UpdateRepresentativeInput {
   };
 }
 
+// ============================================================================
+// BENEFICIARY TYPES
+// ============================================================================
+
+export type AccountType = "checking" | "savings" | "current" | "other";
+
+export interface CreatePersonalBeneficiaryInput {
+  user_id: UUID;
+  entity_id: UUID;
+  email: Email;
+  phone?: string;
+  phone_country?: ISO3166_1;
+  first_name: string;
+  last_name: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state_province_region?: string;
+  postal_code?: PostalCode;
+  country: ISO3166_1;
+  tax_number?: TaxNumber;
+  name_on_bank_account?: string;
+  swift_bic?: string;
+  account_type: AccountType;
+  account_number: string;
+  routing_code?: string;
+  currency: ISO4217;
+  bank_name?: string;
+  branch_name?: string;
+  bank_address1?: string;
+  bank_address2?: string;
+  bank_city?: string;
+  bank_state_province_region?: string;
+  bank_postal_code?: PostalCode;
+  bank_country: ISO3166_1;
+  tax_number_expiration?: DateTime;
+  date_of_birth?: DateTime;
+}
+
+export interface CreateBusinessBeneficiaryInput {
+  user_id: UUID;
+  entity_id: UUID;
+  email: Email;
+  phone?: string;
+  phone_country?: string;
+  business_name: string;
+  business_address1?: string;
+  business_address2?: string;
+  business_city?: string;
+  business_state_province_region?: string;
+  business_postal_code?: PostalCode;
+  business_country: ISO3166_1;
+  tax_number?: TaxNumber;
+  name_on_bank_account?: string;
+  swift_bic?: string;
+  account_type: AccountType;
+  account_number: string;
+  routing_code?: string;
+  currency: ISO4217;
+  bank_name?: string;
+  branch_name?: string;
+  bank_address1?: string;
+  bank_address2?: string;
+  bank_city?: string;
+  bank_state_province_region?: string;
+  bank_postal_code?: PostalCode;
+  bank_country: ISO3166_1;
+}
+
+export interface Beneficiary {
+  id: string;
+  type: "personal" | "business";
+  email?: string;
+  phone?: string;
+  first_name?: string;
+  last_name?: string;
+  business_name?: string;
+  country?: string;
+  bank_country?: string;
+  currency?: string;
+  account_number?: string;
+  routing_code?: string;
+  account_type?: AccountType;
+}

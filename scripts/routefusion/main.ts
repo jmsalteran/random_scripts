@@ -1,7 +1,7 @@
 import { RoutefusionService } from "./routefusion.service";
 import { CreateBusinessEntityInput, BusinessType, CreateUserInput, UUID, EntityType } from "./types/entity.types";
 import { FileEnum } from "./types/entity.types";
-import { CreateRepresentativeInput, RepresentativeResponsibility, UpdateRepresentativeInput } from "./types/service.types";
+import { CreateRepresentativeInput, RepresentativeResponsibility, UpdateRepresentativeInput, CreatePersonalBeneficiaryInput, CreateBusinessBeneficiaryInput } from "./types/service.types";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -671,6 +671,111 @@ async function testValidateRepresentativeDataToSubmit(entityId: string) {
   }
 }
 
+async function testCreatePersonalBeneficiary(userIdParam?: string, entityIdParam?: string) {
+  try {
+    const userId = userIdParam || 'b5fa316d-7d79-442f-a139-faaa7cfa80de' as UUID;
+    const entityId = entityIdParam || '34354c4e-d88f-458a-b9ce-45772447730d' as UUID;
+    const routefusionService = new RoutefusionService();
+
+    const beneficiaryData: CreatePersonalBeneficiaryInput = {
+      user_id: userId as UUID,
+      entity_id: entityId as UUID,
+      email: "beneficiary.personal@example.com",
+      phone: "+573563525448",
+      phone_country: "CO",
+      first_name: "Jane",
+      last_name: "Smith",
+      address1: "789 Personal Street",
+      address2: "Apt 3C",
+      city: "Bogota",
+      state_province_region: "Cundinamarca",
+      postal_code: "510004",
+      country: "CO" as any,
+      tax_number: "9876543210",
+      name_on_bank_account: "Jane Smith",
+      swift_bic: "COLOCO33",
+      account_type: "checking",
+      account_number: "1234567890",
+      routing_code: "123456789",
+      currency: "USD" as any,
+      bank_name: "Test Bank",
+      branch_name: "Main Branch",
+      bank_address1: "456 Bank Street",
+      bank_address2: "Suite 200",
+      bank_city: "Bogota",
+      bank_state_province_region: "Cundinamarca",
+      bank_postal_code: "510004",
+      bank_country: "CO" as any,
+      tax_number_expiration: "2030-12-31T00:00:00Z",
+      date_of_birth: "1990-06-15T00:00:00Z",
+    };
+
+    const beneficiaryId = await routefusionService.createPersonalBeneficiary(beneficiaryData);
+    console.log("Personal beneficiary created. Beneficiary ID:", beneficiaryId);
+    return beneficiaryId;
+  } catch (error) {
+    console.error("\nError occurred during test:");
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    throw error;
+  }
+}
+
+async function testCreateBusinessBeneficiary(userIdParam?: string, entityIdParam?: string) {
+  try {
+    const userId = userIdParam || 'b5fa316d-7d79-442f-a139-faaa7cfa80de' as UUID;
+    const entityId = entityIdParam || '34354c4e-d88f-458a-b9ce-45772447730d' as UUID;
+    const routefusionService = new RoutefusionService();
+
+    const beneficiaryData: CreateBusinessBeneficiaryInput = {
+      user_id: userId as UUID,
+      entity_id: entityId as UUID,
+      email: "beneficiary.business@example.com",
+      phone: "+573563525448",
+      phone_country: "CO",
+      business_name: "Beneficiary Business Corp",
+      business_address1: "789 Business Avenue",
+      business_address2: "Suite 500",
+      business_city: "Bogota",
+      business_state_province_region: "Cundinamarca",
+      business_postal_code: "510004",
+      business_country: "CO" as any,
+      tax_number: "1122334455",
+      name_on_bank_account: "Beneficiary Business Corp",
+      swift_bic: "COLOCO33",
+      account_type: "checking",
+      account_number: "9876543210",
+      routing_code: "987654321",
+      currency: "USD" as any,
+      bank_name: "Test Bank",
+      branch_name: "Business Branch",
+      bank_address1: "456 Bank Street",
+      bank_address2: "Suite 300",
+      bank_city: "Bogota",
+      bank_state_province_region: "Cundinamarca",
+      bank_postal_code: "510004",
+      bank_country: "CO" as any,
+    };
+
+    const beneficiaryId = await routefusionService.createBusinessBeneficiary(beneficiaryData);
+    console.log("Business beneficiary created. Beneficiary ID:", beneficiaryId);
+    return beneficiaryId;
+  } catch (error) {
+    console.error("\nError occurred during test:");
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    throw error;
+  }
+}
+
 async function main() {
   const representativeId = 'c479de98-7420-4a64-b7d3-45889e66d955';
   const businessId = '34354c4e-d88f-458a-b9ce-45772447730d';
@@ -700,6 +805,10 @@ async function main() {
 
   //await testValidateBusinessEntityDataToSubmit();
   //await testValidateRepresentativeDataToSubmit(businessId);
+
+  // Beneficiary tests
+  await testCreatePersonalBeneficiary(userId, businessId);
+  //await testCreateBusinessBeneficiary(userId, businessId);
 }
 
 main()
