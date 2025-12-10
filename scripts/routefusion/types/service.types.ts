@@ -406,3 +406,38 @@ export interface Beneficiary {
   routing_code?: string;
   account_type?: AccountType;
 }
+
+
+// ============================================================================
+// TRANSFER TYPES
+// ============================================================================
+
+export interface CreateTransferInput {
+  user_id: UUID;
+  entity_id: UUID;
+  source_amount?: string;
+  wallet_id?: UUID;
+  destination_amount?: string;
+  account_id?: UUID;
+  beneficiary_id: UUID;
+  purpose_of_payment: string;
+  reference?: string;
+  wire?: boolean;
+  document_reference?: string;
+}
+
+export interface Transfer {
+  id: string;
+  state?: string;
+  source_amount?: string;
+  destination_amount?: string;
+  currency?: string;
+  beneficiary_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FinalizeTransferInput {
+  transfer_id: UUID;
+}
+

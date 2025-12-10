@@ -807,8 +807,8 @@ async function main() {
   //await testValidateRepresentativeDataToSubmit(businessId);
 
   // Beneficiary tests
-  await testCreatePersonalBeneficiary(userId, businessId);
-  //await testCreateBusinessBeneficiary(userId, businessId);
+  //await testCreatePersonalBeneficiary(userId, businessId);
+  await testCreateBusinessBeneficiary(userId, businessId);
 }
 
 main()

@@ -33,6 +33,8 @@ import {
   UpdateRepresentativeInput,
   CreatePersonalBeneficiaryInput,
   CreateBusinessBeneficiaryInput,
+  Transfer,
+  FinalizeTransferInput,
 } from "./types/service.types";
 
 export class RoutefusionService {
@@ -333,7 +335,9 @@ export class RoutefusionService {
       return responseData.data;
     } catch (error) {
       if (error instanceof Error) {
-        logger.error(`[RoutefusionService] File upload failed: ${error.message}`);
+        logger.error(
+          `[RoutefusionService] File upload failed: ${error.message}`
+        );
         throw error;
       }
       throw new Error(`Routefusion API error: ${String(error)}`);
@@ -373,7 +377,11 @@ export class RoutefusionService {
       }>(operations, map, input.file);
 
       logger.info(
-        `[RoutefusionService] Uploaded document: ${JSON.stringify(result, null, 2)}`
+        `[RoutefusionService] Uploaded document: ${JSON.stringify(
+          result,
+          null,
+          2
+        )}`
       );
       return result.singleUpload;
     } catch (error) {
@@ -415,7 +423,11 @@ export class RoutefusionService {
       }>(operations, map, input.file);
 
       logger.info(
-        `[RoutefusionService] Uploaded representative document: ${JSON.stringify(result, null, 2)}`
+        `[RoutefusionService] Uploaded representative document: ${JSON.stringify(
+          result,
+          null,
+          2
+        )}`
       );
       return result.singleUpload;
     } catch (error) {
@@ -785,9 +797,7 @@ export class RoutefusionService {
   /**
    * Finalize a business entity
    */
-  async finalizeBusinessEntity(businessId: string): Promise<void> {
-
-  }
+  async finalizeBusinessEntity(businessId: string): Promise<void> {}
 
   /**
    * Create a wallet for an entity
@@ -861,71 +871,6 @@ export class RoutefusionService {
   }
 
   /**
-   * Create a transfer
-   * This mutation accepts initial data for transfer. This does not initiate the transfer.
-   * After using createTransfer, the next step is to use finalizeTransfer to initiate the transfer.
-   * Reference: https://docs.routefusion.com/reference/create-transfer
-   */
-  async createTransfer(input: CreateTransferInput): Promise<string> {
-    try {
-      const mutation = `
-        mutation createTransfer(
-          $user_id: UUID!
-          $entity_id: UUID!
-          $source_amount: String
-          $wallet_id: UUID
-          $destination_amount: String
-          $account_id: UUID
-          $beneficiary_id: UUID!
-          $purpose_of_payment: String!
-          $reference: String
-          $wire: Boolean
-          $document_reference: String
-        ) {
-          createTransfer(
-            user_id: $user_id
-            entity_id: $entity_id
-            source_amount: $source_amount
-            wallet_id: $wallet_id
-            destination_amount: $destination_amount
-            account_id: $account_id
-            beneficiary_id: $beneficiary_id
-            purpose_of_payment: $purpose_of_payment
-            reference: $reference
-            wire: $wire
-            document_reference: $document_reference
-          )
-        }
-      `;
-
-      const result = await this.executeGraphQL<{
-        createTransfer: string;
-      }>(mutation, {
-        user_id: input.user_id,
-        entity_id: input.entity_id,
-        source_amount: input.source_amount,
-        wallet_id: input.wallet_id,
-        destination_amount: input.destination_amount,
-        account_id: input.account_id,
-        beneficiary_id: input.beneficiary_id,
-        purpose_of_payment: input.purpose_of_payment,
-        reference: input.reference,
-        wire: input.wire,
-        document_reference: input.document_reference,
-      });
-
-      const transferId = result.createTransfer;
-      logger.info(
-        `[RoutefusionService] Created transfer with ID: ${transferId}`
-      );
-      return transferId;
-    } catch (error) {
-      logger.error(`[RoutefusionService] Error creating transfer: ${error}`);
-      throw error;
-    }
-  }
-
-  /**
    * Create a virtual account (named virtual bank account) for a wallet
    */
   async createVirtualAccount(
@@ -956,7 +901,8 @@ export class RoutefusionService {
         `[RoutefusionService] Account Number: ${result.createVirtualAccount.account_number}`
       );
       logger.info(
-        `[RoutefusionService] Routing Number: ${result.createVirtualAccount.routing_number || "N/A"
+        `[RoutefusionService] Routing Number: ${
+          result.createVirtualAccount.routing_number || "N/A"
         }`
       );
     }
@@ -1140,9 +1086,7 @@ export class RoutefusionService {
         business_type: input?.business_type,
       });
 
-      logger.info(
-        `[RoutefusionService] Retrieved entity required fields`
-      );
+      logger.info(`[RoutefusionService] Retrieved entity required fields`);
       return result.entityRequiredFields;
     } catch (error) {
       logger.error(
@@ -1210,15 +1154,15 @@ export class RoutefusionService {
     let cleanRegex = regexString.trim();
 
     // Check if regex has delimiters (starts with /)
-    if (cleanRegex.startsWith('/')) {
+    if (cleanRegex.startsWith("/")) {
       // Find the last unescaped / (delimiter, not part of pattern)
       // Start from the end and work backwards to find the closing delimiter
       let lastSlashIndex = -1;
       for (let i = cleanRegex.length - 1; i > 0; i--) {
-        if (cleanRegex[i] === '/') {
+        if (cleanRegex[i] === "/") {
           // Check if it's escaped (odd number of backslashes before it)
           let backslashCount = 0;
-          for (let j = i - 1; j >= 0 && cleanRegex[j] === '\\'; j--) {
+          for (let j = i - 1; j >= 0 && cleanRegex[j] === "\\"; j--) {
             backslashCount++;
           }
           // If even number of backslashes (or zero), it's not escaped
@@ -1243,9 +1187,18 @@ export class RoutefusionService {
     return cleanRegex;
   }
 
-  async validateBusinessEntityDataToSubmit(input: any, country: ISO3166_1, entity_type: EntityType, business_type: BusinessType): Promise<EntityValidationResult> {
+  async validateBusinessEntityDataToSubmit(
+    input: any,
+    country: ISO3166_1,
+    entity_type: EntityType,
+    business_type: BusinessType
+  ): Promise<EntityValidationResult> {
     try {
-      const requiredFields = await this.getEntityRequiredFields({ country, entity_type, business_type });
+      const requiredFields = await this.getEntityRequiredFields({
+        country,
+        entity_type,
+        business_type,
+      });
       const errors = [];
 
       for (const field of requiredFields.fields) {
@@ -1256,13 +1209,17 @@ export class RoutefusionService {
           const cleanRegex = this.normalizeRegexPattern(field.regex);
           const regexPattern = `^${cleanRegex}$`;
           try {
-            const valRegex = new RegExp(regexPattern).test(input[field.variable]);
+            const valRegex = new RegExp(regexPattern).test(
+              input[field.variable]
+            );
             //logger.info(`[RoutefusionService] Validation regex: ${field.variable} - ${field.regex} - ${valRegex}`);
             if (!valRegex) {
               errors.push(`Field ${field.variable} it is not valid`);
             }
           } catch (regexError) {
-            logger.error(`[RoutefusionService] Invalid regex pattern for ${field.variable}: ${field.regex} - ${regexError}`);
+            logger.error(
+              `[RoutefusionService] Invalid regex pattern for ${field.variable}: ${field.regex} - ${regexError}`
+            );
             errors.push(`Field ${field.variable} has invalid regex pattern`);
           }
         }
@@ -1272,16 +1229,26 @@ export class RoutefusionService {
       } else {
         return { success: true, errors: [] };
       }
-
     } catch (error) {
-      logger.error(`[RoutefusionService] Error validating data to submit: ${error}`);
+      logger.error(
+        `[RoutefusionService] Error validating data to submit: ${error}`
+      );
       throw error;
     }
   }
 
-  async validateRepresentativeDataToSubmit(input: any, country: ISO3166_1, entity_type: EntityType, business_type: BusinessType): Promise<RepresentativeValidationResult> {
+  async validateRepresentativeDataToSubmit(
+    input: any,
+    country: ISO3166_1,
+    entity_type: EntityType,
+    business_type: BusinessType
+  ): Promise<RepresentativeValidationResult> {
     try {
-      const requiredFields = await this.getRepresentativeRequiredFields({ country, entity_type, business_type });
+      const requiredFields = await this.getRepresentativeRequiredFields({
+        country,
+        entity_type,
+        business_type,
+      });
       const errors = [];
 
       for (const field of requiredFields.fields) {
@@ -1292,13 +1259,17 @@ export class RoutefusionService {
           const cleanRegex = this.normalizeRegexPattern(field.regex);
           const regexPattern = `^${cleanRegex}$`;
           try {
-            const valRegex = new RegExp(regexPattern).test(input[field.variable]);
+            const valRegex = new RegExp(regexPattern).test(
+              input[field.variable]
+            );
             //logger.info(`[RoutefusionService] Validation regex: ${field.variable} - ${field.regex} - ${valRegex}`);
             if (!valRegex) {
               errors.push(`Field ${field.variable} it is not valid`);
             }
           } catch (regexError) {
-            logger.error(`[RoutefusionService] Invalid regex pattern for ${field.variable}: ${field.regex} - ${regexError}`);
+            logger.error(
+              `[RoutefusionService] Invalid regex pattern for ${field.variable}: ${field.regex} - ${regexError}`
+            );
             errors.push(`Field ${field.variable} has invalid regex pattern`);
           }
         }
@@ -1309,7 +1280,9 @@ export class RoutefusionService {
         return { success: true, errors: [] };
       }
     } catch (error) {
-      logger.error(`[RoutefusionService] Error validating data to submit: ${error}`);
+      logger.error(
+        `[RoutefusionService] Error validating data to submit: ${error}`
+      );
       throw error;
     }
   }
@@ -1488,6 +1461,117 @@ export class RoutefusionService {
       console.log(
         `[RoutefusionService] Error creating business beneficiary: ${error}`
       );
+      throw error;
+    }
+  }
+  /**
+   * Create a transfer
+   * This creates the transfer but does not initiate it. Use finalizeTransfer to initiate.
+   * Reference: https://docs.routefusion.com/reference/create-transfer
+   */
+  async createTransfer(input: CreateTransferInput): Promise<string> {
+    try {
+      const mutation = `
+        mutation createTransfer (
+          $user_id: UUID!
+          $entity_id: UUID!
+          $source_amount: String
+          $wallet_id: UUID
+          $destination_amount: String
+          $account_id: UUID
+          $beneficiary_id: UUID!
+          $purpose_of_payment: String!
+          $reference: String
+          $wire: Boolean
+          $document_reference: String
+        ) {
+          createTransfer (
+            user_id: $user_id
+            entity_id: $entity_id
+            source_amount: $source_amount
+            wallet_id: $wallet_id
+            destination_amount: $destination_amount
+            account_id: $account_id
+            beneficiary_id: $beneficiary_id
+            purpose_of_payment: $purpose_of_payment
+            reference: $reference
+            wire: $wire
+            document_reference: $document_reference
+          )
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        createTransfer: string;
+      }>(mutation, input);
+
+      console.log(
+        `[RoutefusionService] Created transfer: ${result.createTransfer}`
+      );
+      return result.createTransfer;
+    } catch (error) {
+      console.log(`[RoutefusionService] Error creating transfer: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Finalize a transfer to initiate execution
+   * Reference: https://docs.routefusion.com/reference/finalize-transfer
+   */
+  async finalizeTransfer(input: FinalizeTransferInput): Promise<boolean> {
+    try {
+      const mutation = `
+        mutation finalizeTransfer (
+          $transfer_id: UUID!
+        ) {
+          finalizeTransfer (
+            transfer_id: $transfer_id
+          )
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        finalizeTransfer: boolean;
+      }>(mutation, input);
+
+      console.log(
+        `[RoutefusionService] Finalized transfer: ${input.transfer_id} - ${result.finalizeTransfer}`
+      );
+      return result.finalizeTransfer;
+    } catch (error) {
+      console.log(`[RoutefusionService] Error finalizing transfer: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get transfer by ID
+   */
+  async getTransfer(transferId: string): Promise<Transfer> {
+    try {
+      const query = `
+        query getTransfer($transfer_id: UUID!) {
+          transfer(transfer_id: $transfer_id) {
+            id
+            state
+            source_amount
+            destination_amount
+            currency
+            beneficiary_id
+            created_at
+            updated_at
+          }
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        transfer: Transfer;
+      }>(query, { transfer_id: transferId });
+
+      return result.transfer;
+    } catch (error) {
+      console.log(`[RoutefusionService] Error getting transfer: ${error}`);
       throw error;
     }
   }
