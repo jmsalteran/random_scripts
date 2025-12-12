@@ -160,6 +160,43 @@ export interface RepresentativeRequiredFields {
 }
 
 // ============================================================================
+// BENEFICIARY REQUIRED FIELDS TYPES
+// ============================================================================
+
+export interface BeneficiaryRequiredFieldsItem {
+  variable: string;
+  regex?: string;
+  variable_sub_type?: string;
+  example?: string;
+}
+
+export interface ValidBankCode {
+  code: string;
+  bank_name: string;
+  swift_bic?: string;
+}
+
+export interface BusinessBeneficiaryRequiredFieldsItem extends BeneficiaryRequiredFieldsItem {
+  valid_bank_codes?: ValidBankCode[];
+}
+
+export interface BeneficiaryRequiredFields {
+  personal: BeneficiaryRequiredFieldsItem[];
+  business: BusinessBeneficiaryRequiredFieldsItem[];
+}
+
+export interface BeneficiaryRequiredFieldsQueryInput {
+  bank_country: ISO3166_1;
+  currency: string; // ISO4217 currency code
+  beneficiary_country: ISO3166_1;
+}
+
+export interface BeneficiaryValidationResult {
+  success: boolean;
+  errors: string[];
+}
+
+// ============================================================================
 // REPRESENTATIVE INPUT TYPES
 // ============================================================================
 

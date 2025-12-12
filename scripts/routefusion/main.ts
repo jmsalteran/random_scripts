@@ -4,6 +4,221 @@ import { FileEnum } from "./types/entity.types";
 import { CreateRepresentativeInput, RepresentativeResponsibility, UpdateRepresentativeInput, CreatePersonalBeneficiaryInput, CreateBusinessBeneficiaryInput } from "./types/service.types";
 import * as fs from "fs";
 import * as path from "path";
+import { faker } from "@faker-js/faker";
+
+// ============================================================================
+// GLOBAL CONFIGURATION
+// ============================================================================
+
+/**
+ * User configuration for test flows
+ */
+const USER_CONFIG = {
+  defaultUserId: "b5fa316d-7d79-442f-a139-faaa7cfa80de",
+  createNewUser: true,
+  userData: {
+    first_name: "Test",
+    last_name: "User",
+    admin: false,
+    send_invite_email: false,
+  },
+};
+
+/**
+ * Business entity configuration
+ */
+const BUSINESS_ENTITY_CONFIG = {
+  country: "CO",
+  business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
+  entity_type: EntityType.BUSINESS,
+  email: "test@example.com", // Base email, will have timestamp added
+  address: {
+    address1: "123 Main St",
+    address2: "Suite 100",
+    city: "Bogota",
+    state_province_region: "Cundinamarca",
+    postal_code: "510004",
+    country: "CO",
+  },
+  contact: {
+    phone: "+573563525448",
+    phone_country: "CO",
+    contact_first_name: "John",
+    contact_last_name: "Doe",
+  },
+  business: {
+    tax_number: "1234567890",
+    naics_code: "111111",
+    business_description: "Test business description",
+    trading_symbol: "TEST",
+    owned_by: "John Doe",
+    website_url: "https://www.example.com",
+  },
+  useFakerForBusinessName: true,
+};
+
+/**
+ * Representative configuration
+ */
+const REPRESENTATIVE_CONFIG = {
+  personal: {
+    first_name: "John",
+    last_name: "Doe",
+    email: "john.doe@example.com",
+    phone: "+573563525448",
+    date_of_birth: "1985-05-15T00:00:00Z",
+    citizenship: "CO",
+  },
+  address: {
+    residential_address: "456 Oak Avenue",
+    residential_address2: "Apt 5B",
+    residential_city: "Bogota",
+    residential_state_province_region: "Cundinamarca",
+    residential_postal_code: "510004",
+    residential_country: "CO",
+  },
+  role: {
+    responsibility: RepresentativeResponsibility.DIRECTOR,
+    is_signer: true,
+    job_title: "Chief Executive Officer",
+    ownership_percentage: 50.5,
+  },
+  documents: {
+    document_number: "DL123456789",
+    document_issue_date: "2020-01-15T00:00:00Z",
+    document_expiration_date: "2033-01-15T00:00:00Z",
+    passport_number: "P123456789",
+    tax_number: "1234567890",
+  },
+};
+
+/**
+ * Personal beneficiary configuration
+ */
+const PERSONAL_BENEFICIARY_CONFIG = {
+  corridor: {
+    bank_country: "CO",
+    currency: "USD",
+    beneficiary_country: "CO",
+  },
+  personal: {
+    first_name: "Jane",
+    last_name: "Smith",
+    email: "beneficiary.personal@example.com",
+    phone: "+573563525448",
+    phone_country: "CO",
+    date_of_birth: "1990-06-15T00:00:00Z",
+  },
+  address: {
+    address1: "789 Personal Street",
+    address2: "Apt 3C",
+    city: "Bogota",
+    state_province_region: "Cundinamarca",
+    postal_code: "510004",
+    country: "CO",
+  },
+  bank: {
+    name_on_bank_account: "Jane Smith",
+    swift_bic: "COLOCO33",
+    account_type: "checking" as const,
+    account_number: "1234567890",
+    routing_code: "123456789",
+    bank_name: "Test Bank",
+    branch_name: "Main Branch",
+    bank_address1: "456 Bank Street",
+    bank_address2: "Suite 200",
+    bank_city: "Bogota",
+    bank_state_province_region: "Cundinamarca",
+    bank_postal_code: "510004",
+    bank_country: "CO",
+  },
+  tax: {
+    tax_number: "9876543210",
+    tax_number_expiration: "2030-12-31T00:00:00Z",
+  },
+};
+
+/**
+ * Business beneficiary configuration
+ */
+const BUSINESS_BENEFICIARY_CONFIG = {
+  corridor: {
+    bank_country: "US",
+    currency: "USD",
+    beneficiary_country: "US",
+  },
+  business: {
+    email: "beneficiary.business@example.com",
+    phone: "+15551234567",
+    phone_country: "US",
+    tax_number: "12-3456789",
+  },
+  address: {
+    business_address1: "789 Business Avenue",
+    business_address2: "Suite 500",
+    business_city: "New York",
+    business_state_province_region: "NY",
+    business_postal_code: "10001",
+    business_country: "US",
+  },
+  bank: {
+    swift_bic: "CHASUS33",
+    account_type: "checking" as const,
+    account_number: "9876543210",
+    routing_code: "021000021",
+    bank_name: "Test Bank",
+    branch_name: "Business Branch",
+    bank_address1: "456 Bank Street",
+    bank_address2: "Suite 300",
+    bank_city: "New York",
+    bank_state_province_region: "NY",
+    bank_postal_code: "10001",
+    bank_country: "US",
+  },
+  useFakerForBusinessName: true,
+};
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Build business entity data from configuration
+ */
+function buildBusinessEntityData(): CreateBusinessEntityInput {
+  const businessName = BUSINESS_ENTITY_CONFIG.useFakerForBusinessName
+    ? faker.company.name()
+    : "Test Business LLC";
+  const email = BUSINESS_ENTITY_CONFIG.email.replace('@', `${Date.now()}@`);
+
+  return {
+    email,
+    phone: BUSINESS_ENTITY_CONFIG.contact.phone,
+    phone_country: BUSINESS_ENTITY_CONFIG.contact.phone_country,
+    tax_number: BUSINESS_ENTITY_CONFIG.business.tax_number,
+    contact_first_name: BUSINESS_ENTITY_CONFIG.contact.contact_first_name,
+    contact_last_name: BUSINESS_ENTITY_CONFIG.contact.contact_last_name,
+    business_name: businessName,
+    business_address1: BUSINESS_ENTITY_CONFIG.address.address1,
+    business_address2: BUSINESS_ENTITY_CONFIG.address.address2,
+    business_country: BUSINESS_ENTITY_CONFIG.address.country,
+    business_city: BUSINESS_ENTITY_CONFIG.address.city,
+    business_state_province_region: BUSINESS_ENTITY_CONFIG.address.state_province_region,
+    business_postal_code: BUSINESS_ENTITY_CONFIG.address.postal_code,
+    business_type: BUSINESS_ENTITY_CONFIG.business_type,
+    accept_terms_and_conditions: true,
+    naics_code: BUSINESS_ENTITY_CONFIG.business.naics_code,
+    business_description: BUSINESS_ENTITY_CONFIG.business.business_description,
+    trading_symbol: BUSINESS_ENTITY_CONFIG.business.trading_symbol,
+    owned_by: BUSINESS_ENTITY_CONFIG.business.owned_by,
+    incorporation_date: new Date().toISOString(),
+    website_url: BUSINESS_ENTITY_CONFIG.business.website_url,
+  };
+}
+
+// ============================================================================
+// TEST FUNCTIONS
+// ============================================================================
 
 async function testCreateBusinessEntity() {
   try {
@@ -431,6 +646,8 @@ async function testGetRepresentativeRequiredFields() {
  * 5. mutation createRepresentative
  * 6. add representative document
  * 7. mutation finalizeEntity
+ * 8. Create personal beneficiary (with validation)
+ * 9. Create business beneficiary (with validation)
  */
 async function testCompleteOnboardingFlow() {
   try {
@@ -438,31 +655,37 @@ async function testCompleteOnboardingFlow() {
     console.log("==================================");
     const routefusionService = new RoutefusionService();
 
+    // Step 1: Create or get user
+    console.log("\nStep 1: Creating user...");
+    let userId: string;
+    if (USER_CONFIG.createNewUser) {
+      try {
+        const userData: CreateUserInput = {
+          email: `test${Date.now()}@example.com`,
+          ...USER_CONFIG.userData,
+        };
+        const userResult = await routefusionService.createUser(userData);
+        userId = userResult.routefusionUserID;
+        console.log("User created with ID:", userId);
+      } catch (error) {
+        console.log("User creation failed, using default user ID");
+        userId = USER_CONFIG.defaultUserId;
+      }
+    } else {
+      userId = USER_CONFIG.defaultUserId;
+      console.log("Using default user ID:", userId);
+    }
+
     // Step 2: Create business entity
     console.log("\nStep 2: Creating business entity...");
-    const entityData: CreateBusinessEntityInput = {
-      email: `test${Date.now()}@example.com`,
-      phone: "+573563525448",
-      tax_number: "1234567890",
-      contact_first_name: "John",
-      contact_last_name: "Doe",
-      business_name: "Test Business LLC",
-      business_address1: "123 Main St",
-      business_country: "CO",
-      business_city: "Bogota",
-      business_state_province_region: "Cundinamarca",
-      business_postal_code: "510004",
-      business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
-      accept_terms_and_conditions: true,
-      naics_code: "111111",
-      business_description: "Test business description",
-      trading_symbol: "TEST",
-      owned_by: "John Doe",
-      incorporation_date: new Date().toISOString(),
-      website_url: "https://www.example.com",
-    };
+    const entityData = buildBusinessEntityData();
 
-    const validationResult = await routefusionService.validateBusinessEntityDataToSubmit(entityData, "CO", EntityType.BUSINESS, BusinessType.LIMITED_LIABILITY_COMPANY);
+    const validationResult = await routefusionService.validateBusinessEntityDataToSubmit(
+      entityData,
+      BUSINESS_ENTITY_CONFIG.country,
+      BUSINESS_ENTITY_CONFIG.entity_type,
+      BUSINESS_ENTITY_CONFIG.business_type
+    );
 
     if (!validationResult.success) {
       console.log("Validation failed:", validationResult.errors);
@@ -498,32 +721,20 @@ async function testCompleteOnboardingFlow() {
     const representativeData: CreateRepresentativeInput = {
       entity_id: entityId as UUID,
       representative: {
-        first_name: "John",
-        last_name: "Doe",
-        email: "john.doe@example.com",
-        phone: "+573563525448",
-        date_of_birth: "1985-05-15T00:00:00Z",
-        citizenship: "CO",
-        residential_address: "456 Oak Avenue",
-        residential_address2: "Apt 5B",
-        residential_city: "Bogota",
-        residential_state_province_region: "Cundinamarca",
-        residential_postal_code: "510004",
-        residential_country: "CO",
-        responsibility: RepresentativeResponsibility.DIRECTOR,
-        is_signer: true,
-        job_title: "Chief Executive Officer",
-        ownership_percentage: 50.5,
-        document_number: "DL123456789",
-        document_issue_date: "2020-01-15T00:00:00Z",
-        document_expiration_date: "2033-01-15T00:00:00Z",
-        passport_number: "P123456789",
-        tax_number: "1234567890",
+        ...REPRESENTATIVE_CONFIG.personal,
+        ...REPRESENTATIVE_CONFIG.address,
+        ...REPRESENTATIVE_CONFIG.role,
+        ...REPRESENTATIVE_CONFIG.documents,
       },
     };
-    const validationResultRepresentative = await routefusionService.validateRepresentativeDataToSubmit(representativeData.representative, "CO", EntityType.BUSINESS, BusinessType.LIMITED_LIABILITY_COMPANY);
+    const validationResultRepresentative = await routefusionService.validateRepresentativeDataToSubmit(
+      representativeData.representative,
+      BUSINESS_ENTITY_CONFIG.country,
+      BUSINESS_ENTITY_CONFIG.entity_type,
+      BUSINESS_ENTITY_CONFIG.business_type
+    );
     if (!validationResultRepresentative.success) {
-      console.log("Validation failed:", validationResult.errors);
+      console.log("Validation failed:", validationResultRepresentative.errors);
       return;
     }
     const representativeId = await routefusionService.createRepresentative(representativeData);
@@ -551,10 +762,142 @@ async function testCompleteOnboardingFlow() {
     console.log("\nStep 7: Finalizing entity...");
     const finalizedEntityId = await routefusionService.finalizeEntity(entityId);
     console.log("Entity finalized. ID:", finalizedEntityId);
-    console.log("Complete onboarding flow finished successfully!");
+
+    // Step 8: Create personal beneficiary with validation
+    console.log("\nStep 8: Creating personal beneficiary...");
+
+    // Get required fields first to understand what's needed
+    const personalBeneficiaryRequiredFields = await routefusionService.getBeneficiaryRequiredFields({
+      bank_country: PERSONAL_BENEFICIARY_CONFIG.corridor.bank_country,
+      currency: PERSONAL_BENEFICIARY_CONFIG.corridor.currency,
+      beneficiary_country: PERSONAL_BENEFICIARY_CONFIG.corridor.beneficiary_country,
+    });
+    console.log("Personal beneficiary required fields:", JSON.stringify(personalBeneficiaryRequiredFields.personal, null, 2));
+
+    const personalBeneficiaryEmail = PERSONAL_BENEFICIARY_CONFIG.personal.email.replace('@', `${Date.now()}@`);
+    const personalBeneficiaryData: CreatePersonalBeneficiaryInput = {
+      user_id: userId as UUID,
+      entity_id: entityId as UUID,
+      email: personalBeneficiaryEmail,
+      phone: PERSONAL_BENEFICIARY_CONFIG.personal.phone,
+      phone_country: PERSONAL_BENEFICIARY_CONFIG.personal.phone_country,
+      first_name: PERSONAL_BENEFICIARY_CONFIG.personal.first_name,
+      last_name: PERSONAL_BENEFICIARY_CONFIG.personal.last_name,
+      address1: PERSONAL_BENEFICIARY_CONFIG.address.address1,
+      address2: PERSONAL_BENEFICIARY_CONFIG.address.address2,
+      city: PERSONAL_BENEFICIARY_CONFIG.address.city,
+      state_province_region: PERSONAL_BENEFICIARY_CONFIG.address.state_province_region,
+      postal_code: PERSONAL_BENEFICIARY_CONFIG.address.postal_code,
+      country: PERSONAL_BENEFICIARY_CONFIG.address.country as any,
+      tax_number: PERSONAL_BENEFICIARY_CONFIG.tax.tax_number,
+      name_on_bank_account: PERSONAL_BENEFICIARY_CONFIG.bank.name_on_bank_account,
+      swift_bic: PERSONAL_BENEFICIARY_CONFIG.bank.swift_bic,
+      account_type: PERSONAL_BENEFICIARY_CONFIG.bank.account_type,
+      account_number: PERSONAL_BENEFICIARY_CONFIG.bank.account_number,
+      routing_code: PERSONAL_BENEFICIARY_CONFIG.bank.routing_code,
+      currency: PERSONAL_BENEFICIARY_CONFIG.corridor.currency as any,
+      bank_name: PERSONAL_BENEFICIARY_CONFIG.bank.bank_name,
+      branch_name: PERSONAL_BENEFICIARY_CONFIG.bank.branch_name,
+      bank_address1: PERSONAL_BENEFICIARY_CONFIG.bank.bank_address1,
+      bank_address2: PERSONAL_BENEFICIARY_CONFIG.bank.bank_address2,
+      bank_city: PERSONAL_BENEFICIARY_CONFIG.bank.bank_city,
+      bank_state_province_region: PERSONAL_BENEFICIARY_CONFIG.bank.bank_state_province_region,
+      bank_postal_code: PERSONAL_BENEFICIARY_CONFIG.bank.bank_postal_code,
+      bank_country: PERSONAL_BENEFICIARY_CONFIG.bank.bank_country as any,
+      tax_number_expiration: PERSONAL_BENEFICIARY_CONFIG.tax.tax_number_expiration,
+      date_of_birth: PERSONAL_BENEFICIARY_CONFIG.personal.date_of_birth,
+    };
+
+    // Validate personal beneficiary data
+    const personalValidationResult = await routefusionService.validatePersonalBeneficiaryDataToSubmit(
+      personalBeneficiaryData,
+      PERSONAL_BENEFICIARY_CONFIG.corridor.bank_country,
+      PERSONAL_BENEFICIARY_CONFIG.corridor.currency,
+      PERSONAL_BENEFICIARY_CONFIG.corridor.beneficiary_country
+    );
+
+    if (!personalValidationResult.success) {
+      console.log("Personal beneficiary validation failed:", personalValidationResult.errors);
+      console.log("Attempting to create anyway...");
+    } else {
+      console.log("Personal beneficiary validation passed");
+    }
+
+    const personalBeneficiaryId = await routefusionService.createPersonalBeneficiary(personalBeneficiaryData);
+    console.log("Personal beneficiary created with ID:", personalBeneficiaryId);
+
+    // Step 9: Create business beneficiary with validation
+    console.log("\nStep 9: Creating business beneficiary...");
+
+    // Get required fields first to understand what's needed
+    const businessBeneficiaryRequiredFields = await routefusionService.getBeneficiaryRequiredFields({
+      bank_country: BUSINESS_BENEFICIARY_CONFIG.corridor.bank_country,
+      currency: BUSINESS_BENEFICIARY_CONFIG.corridor.currency,
+      beneficiary_country: BUSINESS_BENEFICIARY_CONFIG.corridor.beneficiary_country,
+    });
+    console.log("Business beneficiary required fields:", JSON.stringify(businessBeneficiaryRequiredFields.business, null, 2));
+
+    const beneficiaryBusinessName = BUSINESS_BENEFICIARY_CONFIG.useFakerForBusinessName
+      ? faker.company.name()
+      : "Beneficiary Business Corp";
+    const businessBeneficiaryEmail = BUSINESS_BENEFICIARY_CONFIG.business.email.replace('@', `${Date.now()}@`);
+    const businessBeneficiaryData: CreateBusinessBeneficiaryInput = {
+      user_id: userId as UUID,
+      entity_id: entityId as UUID,
+      email: businessBeneficiaryEmail,
+      phone: BUSINESS_BENEFICIARY_CONFIG.business.phone,
+      phone_country: BUSINESS_BENEFICIARY_CONFIG.business.phone_country,
+      business_name: beneficiaryBusinessName,
+      business_address1: BUSINESS_BENEFICIARY_CONFIG.address.business_address1,
+      business_address2: BUSINESS_BENEFICIARY_CONFIG.address.business_address2,
+      business_city: BUSINESS_BENEFICIARY_CONFIG.address.business_city,
+      business_state_province_region: BUSINESS_BENEFICIARY_CONFIG.address.business_state_province_region,
+      business_postal_code: BUSINESS_BENEFICIARY_CONFIG.address.business_postal_code,
+      business_country: BUSINESS_BENEFICIARY_CONFIG.address.business_country as any,
+      tax_number: BUSINESS_BENEFICIARY_CONFIG.business.tax_number,
+      name_on_bank_account: beneficiaryBusinessName,
+      swift_bic: BUSINESS_BENEFICIARY_CONFIG.bank.swift_bic,
+      account_type: BUSINESS_BENEFICIARY_CONFIG.bank.account_type,
+      account_number: BUSINESS_BENEFICIARY_CONFIG.bank.account_number,
+      routing_code: BUSINESS_BENEFICIARY_CONFIG.bank.routing_code,
+      currency: BUSINESS_BENEFICIARY_CONFIG.corridor.currency as any,
+      bank_name: BUSINESS_BENEFICIARY_CONFIG.bank.bank_name,
+      branch_name: BUSINESS_BENEFICIARY_CONFIG.bank.branch_name,
+      bank_address1: BUSINESS_BENEFICIARY_CONFIG.bank.bank_address1,
+      bank_address2: BUSINESS_BENEFICIARY_CONFIG.bank.bank_address2,
+      bank_city: BUSINESS_BENEFICIARY_CONFIG.bank.bank_city,
+      bank_state_province_region: BUSINESS_BENEFICIARY_CONFIG.bank.bank_state_province_region,
+      bank_postal_code: BUSINESS_BENEFICIARY_CONFIG.bank.bank_postal_code,
+      bank_country: BUSINESS_BENEFICIARY_CONFIG.bank.bank_country as any,
+    };
+
+    // Validate business beneficiary data
+    const businessValidationResult = await routefusionService.validateBusinessBeneficiaryDataToSubmit(
+      businessBeneficiaryData,
+      BUSINESS_BENEFICIARY_CONFIG.corridor.bank_country,
+      BUSINESS_BENEFICIARY_CONFIG.corridor.currency,
+      BUSINESS_BENEFICIARY_CONFIG.corridor.beneficiary_country
+    );
+
+    if (!businessValidationResult.success) {
+      console.log("Business beneficiary validation failed:", businessValidationResult.errors);
+      console.log("Attempting to create anyway...");
+    } else {
+      console.log("Business beneficiary validation passed");
+    }
+
+    const businessBeneficiaryId = await routefusionService.createBusinessBeneficiary(businessBeneficiaryData);
+    console.log("Business beneficiary created with ID:", businessBeneficiaryId);
+
+    console.log("\nComplete onboarding flow finished successfully!");
+    console.log("================================================");
 
     return {
       entityId,
+      userId,
+      representativeId,
+      personalBeneficiaryId,
+      businessBeneficiaryId,
       finalized: true,
     };
   } catch (error) {
@@ -742,23 +1085,23 @@ async function testCreateBusinessBeneficiary(userIdParam?: string, entityIdParam
       business_address2: "Suite 500",
       business_city: "Bogota",
       business_state_province_region: "Cundinamarca",
-      business_postal_code: "510004",
-      business_country: "CO" as any,
-      tax_number: "1122334455",
+      business_postal_code: "78702",
+      business_country: "US" as any,
+      tax_number: "123-45-6789",
       name_on_bank_account: "Beneficiary Business Corp",
       swift_bic: "COLOCO33",
       account_type: "checking",
       account_number: "9876543210",
-      routing_code: "987654321",
+      routing_code: "113193532",
       currency: "USD" as any,
       bank_name: "Test Bank",
       branch_name: "Business Branch",
       bank_address1: "456 Bank Street",
       bank_address2: "Suite 300",
-      bank_city: "Bogota",
-      bank_state_province_region: "Cundinamarca",
-      bank_postal_code: "510004",
-      bank_country: "CO" as any,
+      bank_city: "NY",
+      bank_state_province_region: "NY",
+      bank_postal_code: "78702",
+      bank_country: "US" as any,
     };
 
     const beneficiaryId = await routefusionService.createBusinessBeneficiary(beneficiaryData);
@@ -801,14 +1144,14 @@ async function main() {
   //await testGetRepresentativeRequiredFields();
 
   // Complete onboarding flow test
-  // await testCompleteOnboardingFlow();
+  await testCompleteOnboardingFlow();
 
   //await testValidateBusinessEntityDataToSubmit();
   //await testValidateRepresentativeDataToSubmit(businessId);
 
   // Beneficiary tests
   //await testCreatePersonalBeneficiary(userId, businessId);
-  await testCreateBusinessBeneficiary(userId, businessId);
+  //await testCreateBusinessBeneficiary(userId, businessId);
 }
 
 main()

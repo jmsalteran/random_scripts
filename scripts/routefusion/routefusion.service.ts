@@ -15,6 +15,9 @@ import {
   BusinessType,
   EntityType,
   ISO3166_1,
+  BeneficiaryRequiredFields,
+  BeneficiaryRequiredFieldsQueryInput,
+  BeneficiaryValidationResult,
 } from "./types/entity.types";
 import {
   CreateWalletInput,
@@ -1144,6 +1147,66 @@ export class RoutefusionService {
   }
 
   /**
+   * Get required fields for a beneficiary based on bank country, currency, and beneficiary country
+   * Reference: https://docs.routefusion.com/reference/beneficiary-required-fields
+   */
+  async getBeneficiaryRequiredFields(
+    input: BeneficiaryRequiredFieldsQueryInput
+  ): Promise<BeneficiaryRequiredFields> {
+    try {
+      const query = `
+        query beneficiaryRequiredFields(
+          $bank_country: ISO3166_1!
+          $currency: ISO4217!
+          $beneficiary_country: ISO3166_1!
+        ) {
+          beneficiaryRequiredFields(
+            bank_country: $bank_country
+            currency: $currency
+            beneficiary_country: $beneficiary_country
+          ) {
+            personal {
+              variable
+              regex
+              variable_sub_type
+              example
+            }
+            business {
+              variable
+              regex
+              variable_sub_type
+              example
+              valid_bank_codes {
+                code
+                bank_name
+                swift_bic
+              }
+            }
+          }
+        }
+      `;
+
+      const result = await this.executeGraphQL<{
+        beneficiaryRequiredFields: BeneficiaryRequiredFields;
+      }>(query, {
+        bank_country: input.bank_country,
+        currency: input.currency,
+        beneficiary_country: input.beneficiary_country,
+      });
+
+      logger.info(
+        `[RoutefusionService] Retrieved beneficiary required fields`
+      );
+      return result.beneficiaryRequiredFields;
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error getting beneficiary required fields: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Normalize regex pattern from API response
    * Handles regex with delimiters (/pattern/ or /pattern/flags) or without delimiters
    * Also handles escaped slashes within the pattern
@@ -1282,6 +1345,112 @@ export class RoutefusionService {
     } catch (error) {
       logger.error(
         `[RoutefusionService] Error validating data to submit: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Validate personal beneficiary data against required fields for the given corridor
+   * Reference: https://docs.routefusion.com/reference/beneficiary-required-fields
+   */
+  async validatePersonalBeneficiaryDataToSubmit(
+    input: any,
+    bank_country: ISO3166_1,
+    currency: string,
+    beneficiary_country: ISO3166_1
+  ): Promise<BeneficiaryValidationResult> {
+    try {
+      const requiredFields = await this.getBeneficiaryRequiredFields({
+        bank_country,
+        currency,
+        beneficiary_country,
+      });
+      const errors = [];
+
+      for (const field of requiredFields.personal) {
+        if (!input[field.variable]) {
+          errors.push(`Field ${field.variable} is required`);
+        }
+        if (field.regex && input[field.variable]) {
+          const cleanRegex = this.normalizeRegexPattern(field.regex);
+          const regexPattern = `^${cleanRegex}$`;
+          try {
+            const valRegex = new RegExp(regexPattern).test(
+              input[field.variable]
+            );
+            if (!valRegex) {
+              errors.push(`Field ${field.variable} is not valid`);
+            }
+          } catch (regexError) {
+            logger.error(
+              `[RoutefusionService] Invalid regex pattern for ${field.variable}: ${field.regex} - ${regexError}`
+            );
+            errors.push(`Field ${field.variable} has invalid regex pattern`);
+          }
+        }
+      }
+      if (errors.length > 0) {
+        return { success: false, errors };
+      } else {
+        return { success: true, errors: [] };
+      }
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error validating personal beneficiary data: ${error}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Validate business beneficiary data against required fields for the given corridor
+   * Reference: https://docs.routefusion.com/reference/beneficiary-required-fields
+   */
+  async validateBusinessBeneficiaryDataToSubmit(
+    input: any,
+    bank_country: ISO3166_1,
+    currency: string,
+    beneficiary_country: ISO3166_1
+  ): Promise<BeneficiaryValidationResult> {
+    try {
+      const requiredFields = await this.getBeneficiaryRequiredFields({
+        bank_country,
+        currency,
+        beneficiary_country,
+      });
+      const errors = [];
+
+      for (const field of requiredFields.business) {
+        if (!input[field.variable]) {
+          errors.push(`Field ${field.variable} is required`);
+        }
+        if (field.regex && input[field.variable]) {
+          const cleanRegex = this.normalizeRegexPattern(field.regex);
+          const regexPattern = `^${cleanRegex}$`;
+          try {
+            const valRegex = new RegExp(regexPattern).test(
+              input[field.variable]
+            );
+            if (!valRegex) {
+              errors.push(`Field ${field.variable} is not valid`);
+            }
+          } catch (regexError) {
+            logger.error(
+              `[RoutefusionService] Invalid regex pattern for ${field.variable}: ${field.regex} - ${regexError}`
+            );
+            errors.push(`Field ${field.variable} has invalid regex pattern`);
+          }
+        }
+      }
+      if (errors.length > 0) {
+        return { success: false, errors };
+      } else {
+        return { success: true, errors: [] };
+      }
+    } catch (error) {
+      logger.error(
+        `[RoutefusionService] Error validating business beneficiary data: ${error}`
       );
       throw error;
     }
