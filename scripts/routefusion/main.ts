@@ -57,7 +57,7 @@ export const TEST_INPUTS = {
       first_name: faker.person.firstName(),
       last_name: faker.person.lastName(),
       email: `test${Date.now()}@example.com`, // Simple format for validation
-      phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
+      phone: `+1201${faker.string.numeric(7)}`, // US phone number with country code, starting with 201 (e.g., +12015550123)
       date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
       citizenship: "US" as ISO3166_1,
       residential_address: faker.location.streetAddress(),
@@ -296,7 +296,7 @@ const REPRESENTATIVE_CONFIG = {
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
     email: `test${Date.now()}@example.com`, // Simple format for validation
-    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
+    phone: `+1201${faker.string.numeric(7)}`, // US phone number with country code, starting with 201 (e.g., +12015550123)
     date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
     citizenship: "US",
   },
@@ -848,7 +848,7 @@ async function testCompleteOnboardingFlow() {
     }
 
     // Step 5: Create representative
-    console.log("\nStep 5: Creating representative...");
+    console.log("\nStep 4: Creating representative...");
     const representativeData: CreateRepresentativeInput = {
       ...TEST_INPUTS.createRepresentative,
       entity_id: entityId as UUID,
@@ -867,7 +867,7 @@ async function testCompleteOnboardingFlow() {
     console.log("Representative created with ID:", representativeId);
 
     // Step 6: Upload representative document
-    console.log("\nStep 6: Uploading representative document...");
+    console.log("\nStep 5: Uploading representative document...");
     if (fs.existsSync(filePath)) {
       const fileBuffer = fs.readFileSync(filePath);
       const file = new Blob([fileBuffer], { type: "text/plain" });
@@ -885,12 +885,12 @@ async function testCompleteOnboardingFlow() {
     }
 
     // Step 7: Finalize entity
-    console.log("\nStep 7: Finalizing entity...");
+    console.log("\nStep 6: Finalizing entity...");
     const finalizedEntityId = await routefusionService.finalizeEntity(entityId);
     console.log("Entity finalized. ID:", finalizedEntityId);
 
     // Step 8: Create personal beneficiary with validation
-    console.log("\nStep 8: Creating personal beneficiary...");
+    console.log("\nStep 7: Creating personal beneficiary...");
 
     // Get required fields first to understand what's needed
     const personalBeneficiaryRequiredFields = await routefusionService.getBeneficiaryRequiredFields(TEST_INPUTS.getBeneficiaryRequiredFields);
@@ -923,7 +923,7 @@ async function testCompleteOnboardingFlow() {
     console.log("Personal beneficiary created with ID:", personalBeneficiaryId);
 
     // Step 9: Create business beneficiary with validation
-    console.log("\nStep 9: Creating business beneficiary...");
+    console.log("\nStep 8: Creating business beneficiary...");
 
     // Get required fields first to understand what's needed
     const businessBeneficiaryRequiredFields = await routefusionService.getBeneficiaryRequiredFields({
