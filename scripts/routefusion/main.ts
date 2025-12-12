@@ -1,10 +1,241 @@
 import { RoutefusionService } from "./routefusion.service";
-import { CreateBusinessEntityInput, BusinessType, CreateUserInput, UUID, EntityType } from "./types/entity.types";
+import { CreateBusinessEntityInput, BusinessType, CreateUserInput, UUID, EntityType, ISO3166_1, EntityRequiredFieldsQueryInput, RepresentativeRequiredFieldsQueryInput, BeneficiaryRequiredFieldsQueryInput } from "./types/entity.types";
 import { FileEnum } from "./types/entity.types";
-import { CreateRepresentativeInput, RepresentativeResponsibility, UpdateRepresentativeInput, CreatePersonalBeneficiaryInput, CreateBusinessBeneficiaryInput } from "./types/service.types";
+import { CreateRepresentativeInput, RepresentativeResponsibility, UpdateRepresentativeInput, CreatePersonalBeneficiaryInput, CreateBusinessBeneficiaryInput, CreateWalletInput, AddBalanceToWalletInput, CreateTransferInput, FinalizeTransferInput, UploadBusinessEntityDocumentInput, UploadRepresentativeDocumentInput } from "./types/service.types";
 import * as fs from "fs";
 import * as path from "path";
 import { faker } from "@faker-js/faker";
+
+// ============================================================================
+// TEST INPUTS - CENTRALIZED INPUT DATA FOR ALL ROUTEFUSION SERVICE METHODS
+// ============================================================================
+
+/**
+ * Centralized test inputs for all Routefusion service methods.
+ * All test functions should reference this section for their input data.
+ * Uses faker for generating realistic test data.
+ */
+export const TEST_INPUTS = {
+  // User inputs
+  createUser: {
+    email: faker.internet.email(),
+    first_name: faker.person.firstName(),
+    last_name: faker.person.lastName(),
+    admin: false,
+    send_invite_email: false,
+  } as CreateUserInput,
+
+  // Business Entity inputs
+  createBusinessEntity: {
+    email: faker.internet.email(),
+    phone: faker.phone.number("##########"), // US phone number without formatting
+    phone_country: "US",
+    contact_first_name: faker.person.firstName(),
+    contact_last_name: faker.person.lastName(),
+    business_name: faker.company.name(),
+    business_address1: faker.location.streetAddress(),
+    business_address2: faker.location.secondaryAddress(),
+    business_city: faker.location.city(),
+    business_state_province_region: faker.location.state({ abbreviated: true }),
+    business_postal_code: faker.location.zipCode("#####"),
+    business_country: "US" as ISO3166_1,
+    business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
+    tax_number: faker.string.numeric(9).replace(/(\d{2})(\d{7})/, "$1-$2"), // US EIN format: XX-XXXXXXX
+    accept_terms_and_conditions: true,
+    naics_code: faker.string.numeric(6),
+    business_description: faker.company.catchPhrase(),
+    trading_symbol: faker.string.alpha(4).toUpperCase(),
+    owned_by: `${faker.person.firstName()} ${faker.person.lastName()}`,
+    incorporation_date: new Date().toISOString(),
+    website_url: faker.internet.url(),
+  } as CreateBusinessEntityInput,
+
+  // Representative inputs
+  createRepresentative: {
+    entity_id: "" as UUID, // Will be set dynamically
+    representative: {
+      first_name: faker.person.firstName(),
+      last_name: faker.person.lastName(),
+      email: faker.internet.email(),
+      phone: faker.phone.number("##########"), // US phone number
+      date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
+      citizenship: "US" as ISO3166_1,
+      residential_address: faker.location.streetAddress(),
+      residential_address2: faker.location.secondaryAddress(),
+      residential_city: faker.location.city(),
+      residential_state_province_region: faker.location.state({ abbreviated: true }),
+      residential_postal_code: faker.location.zipCode("#####"),
+      residential_country: "US" as ISO3166_1,
+      responsibility: RepresentativeResponsibility.DIRECTOR,
+      is_signer: true,
+      job_title: faker.person.jobTitle(),
+      ownership_percentage: faker.number.float({ min: 0, max: 100, fractionDigits: 1 }),
+      document_number: faker.string.alphanumeric(9).toUpperCase(), // Driver's license format
+      document_issue_date: faker.date.past({ years: 3 }).toISOString(),
+      document_expiration_date: faker.date.future({ years: 10 }).toISOString(),
+      passport_number: faker.string.alphanumeric(9).toUpperCase(),
+      tax_number: faker.string.numeric(9).replace(/(\d{3})(\d{2})(\d{4})/, "$1-$2-$3"), // US SSN format: XXX-XX-XXXX
+    },
+  } as CreateRepresentativeInput,
+
+  updateRepresentative: {
+    updateRepresentativeId: "" as UUID, // Will be set dynamically
+    representative: {
+      document_expiration_date: "2026-03-20T00:00:00Z",
+      // Other fields can be uncommented as needed:
+      // first_name: "Jane",
+      // last_name: "Smith-Updated",
+      // email: "jane.smith.updated@example.com",
+      // phone: "+1234567891",
+      // date_of_birth: "1985-05-15T00:00:00Z",
+      // citizenship: "US",
+      // residential_address: "789 Pine Street",
+      // residential_address2: "Suite 200",
+      // residential_city: "San Francisco",
+      // residential_state_province_region: "CA",
+      // residential_postal_code: "94102",
+      // residential_country: "US",
+      // responsibility: RepresentativeResponsibility.DIRECTOR,
+      // is_signer: true,
+      // job_title: "Chief Technology Officer",
+      // ownership_percentage: 30.0,
+      // document_number: "DL987654321",
+      // document_issue_date: "2021-03-20T00:00:00Z",
+      // passport_number: "P987654321",
+      // tax_number: "987-65-4321",
+    },
+  } as UpdateRepresentativeInput,
+
+  // Personal Beneficiary inputs
+  createPersonalBeneficiary: {
+    user_id: "" as UUID, // Will be set dynamically
+    entity_id: "" as UUID, // Will be set dynamically
+    email: faker.internet.email(),
+    phone: faker.phone.number("##########"), // US phone number
+    phone_country: "US" as ISO3166_1,
+    first_name: faker.person.firstName(),
+    last_name: faker.person.lastName(),
+    address1: faker.location.streetAddress(),
+    address2: faker.location.secondaryAddress(),
+    city: faker.location.city(),
+    state_province_region: faker.location.state({ abbreviated: true }),
+    postal_code: faker.location.zipCode("#####"),
+    country: "US" as ISO3166_1,
+    tax_number: faker.string.numeric(9).replace(/(\d{3})(\d{2})(\d{4})/, "$1-$2-$3"), // US SSN format
+    name_on_bank_account: `${faker.person.firstName()} ${faker.person.lastName()}`,
+    swift_bic: faker.string.alpha(4).toUpperCase() + "US" + faker.string.alphanumeric(2).toUpperCase() + faker.string.alphanumeric(3).toUpperCase(), // SWIFT BIC format: 4 letters + US + 2 alphanumeric + 3 alphanumeric
+    account_type: "checking" as const,
+    account_number: faker.string.numeric(10),
+    routing_code: faker.string.numeric(9), // US routing number
+    currency: "USD" as any,
+    bank_name: faker.company.name() + " Bank",
+    branch_name: faker.location.city() + " Branch",
+    bank_address1: faker.location.streetAddress(),
+    bank_address2: faker.location.secondaryAddress(),
+    bank_city: faker.location.city(),
+    bank_state_province_region: faker.location.state({ abbreviated: true }),
+    bank_postal_code: faker.location.zipCode("#####"),
+    bank_country: "US" as ISO3166_1,
+    tax_number_expiration: faker.date.future({ years: 5 }).toISOString(),
+    date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
+  } as CreatePersonalBeneficiaryInput,
+
+  // Business Beneficiary inputs
+  createBusinessBeneficiary: {
+    user_id: "" as UUID, // Will be set dynamically
+    entity_id: "" as UUID, // Will be set dynamically
+    email: faker.internet.email(),
+    phone: faker.phone.number("##########"), // US phone number
+    phone_country: "US",
+    business_name: faker.company.name(),
+    business_address1: faker.location.streetAddress(),
+    business_address2: faker.location.secondaryAddress(),
+    business_city: faker.location.city(),
+    business_state_province_region: faker.location.state({ abbreviated: true }),
+    business_postal_code: faker.location.zipCode("#####"),
+    business_country: "US" as ISO3166_1,
+    tax_number: faker.string.numeric(9).replace(/(\d{2})(\d{7})/, "$1-$2"), // US EIN format
+    name_on_bank_account: faker.company.name(),
+    swift_bic: faker.string.alpha(4).toUpperCase() + "US" + faker.string.alphanumeric(2).toUpperCase() + faker.string.alphanumeric(3).toUpperCase(), // SWIFT BIC format: 4 letters + US + 2 alphanumeric + 3 alphanumeric
+    account_type: "checking" as const,
+    account_number: faker.string.numeric(10),
+    routing_code: faker.string.numeric(9), // US routing number
+    currency: "USD" as any,
+    bank_name: faker.company.name() + " Bank",
+    branch_name: faker.location.city() + " Branch",
+    bank_address1: faker.location.streetAddress(),
+    bank_address2: faker.location.secondaryAddress(),
+    bank_city: faker.location.city(),
+    bank_state_province_region: faker.location.state({ abbreviated: true }),
+    bank_postal_code: faker.location.zipCode("#####"),
+    bank_country: "US" as ISO3166_1,
+  } as CreateBusinessBeneficiaryInput,
+
+  // Wallet inputs
+  createWallet: {
+    entityId: "" as UUID, // Will be set dynamically
+    currency: "USD" as any,
+  } as CreateWalletInput,
+
+  addBalanceToWallet: {
+    wallet_id: "" as UUID, // Will be set dynamically
+    amount: "100.00",
+  } as AddBalanceToWalletInput,
+
+  // Transfer inputs
+  createTransfer: {
+    user_id: "" as UUID, // Will be set dynamically
+    entity_id: "" as UUID, // Will be set dynamically
+    beneficiary_id: "" as UUID, // Will be set dynamically
+    purpose_of_payment: "Payment for services",
+    source_amount: "100.00",
+    wallet_id: undefined as UUID | undefined, // Will be set dynamically
+    reference: `Test transfer ${Date.now()}`,
+  } as CreateTransferInput,
+
+  finalizeTransfer: {
+    transfer_id: "" as UUID, // Will be set dynamically
+  } as FinalizeTransferInput,
+
+  // Document upload inputs
+  uploadEntityDocument: {
+    entityId: "" as UUID, // Will be set dynamically
+    file: null as any, // Will be set dynamically from file system
+    file_enum: FileEnum.PASSPORT,
+  } as UploadBusinessEntityDocumentInput,
+
+  uploadRepresentativeDocument: {
+    representativeId: "" as UUID, // Will be set dynamically
+    file: null as any, // Will be set dynamically from file system
+    file_enum: FileEnum.PASSPORT,
+  } as UploadRepresentativeDocumentInput,
+
+  // Query inputs
+  getEntityRequiredFields: {
+    country: "US" as ISO3166_1,
+    entity_type: EntityType.BUSINESS,
+    business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
+  } as EntityRequiredFieldsQueryInput,
+
+  getRepresentativeRequiredFields: {
+    country: "US" as ISO3166_1,
+  } as RepresentativeRequiredFieldsQueryInput,
+
+  getBeneficiaryRequiredFields: {
+    bank_country: "US" as ISO3166_1,
+    currency: "USD",
+    beneficiary_country: "US" as ISO3166_1,
+  } as BeneficiaryRequiredFieldsQueryInput,
+
+  // Test IDs (can be updated as needed)
+  testIds: {
+    userId: "b5fa316d-7d79-442f-a139-faaa7cfa80de" as UUID,
+    businessId: "63cdba52-cc6d-450e-9a20-83c9b40a251e" as UUID,
+    representativeId: "c479de98-7420-4a64-b7d3-45889e66d955" as UUID,
+    walletId: "5b23b460-c0a7-49b4-9b95-649749ca3db5" as UUID,
+    beneficiaryId: "your-beneficiary-id-here" as UUID,
+  },
+};
 
 // ============================================================================
 // GLOBAL CONFIGURATION
@@ -14,13 +245,13 @@ import { faker } from "@faker-js/faker";
  * User configuration for test flows
  */
 const USER_CONFIG = {
-  defaultUserId: "b5fa316d-7d79-442f-a139-faaa7cfa80de",
+  defaultUserId: TEST_INPUTS.testIds.userId,
   createNewUser: true,
   userData: {
-    first_name: "Test",
-    last_name: "User",
-    admin: false,
-    send_invite_email: false,
+    first_name: TEST_INPUTS.createUser.first_name,
+    last_name: TEST_INPUTS.createUser.last_name,
+    admin: TEST_INPUTS.createUser.admin,
+    send_invite_email: TEST_INPUTS.createUser.send_invite_email,
   },
 };
 
@@ -28,31 +259,31 @@ const USER_CONFIG = {
  * Business entity configuration
  */
 const BUSINESS_ENTITY_CONFIG = {
-  country: "CO",
+  country: "US",
   business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
   entity_type: EntityType.BUSINESS,
-  email: "test@example.com", // Base email, will have timestamp added
+  email: faker.internet.email(), // Base email, will have timestamp added
   address: {
-    address1: "123 Main St",
-    address2: "Suite 100",
-    city: "Bogota",
-    state_province_region: "Cundinamarca",
-    postal_code: "510004",
-    country: "CO",
+    address1: faker.location.streetAddress(),
+    address2: faker.location.secondaryAddress(),
+    city: faker.location.city(),
+    state_province_region: faker.location.state({ abbreviated: true }),
+    postal_code: faker.location.zipCode("#####"),
+    country: "US",
   },
   contact: {
-    phone: "+573563525448",
-    phone_country: "CO",
-    contact_first_name: "John",
-    contact_last_name: "Doe",
+    phone: faker.phone.number("##########"),
+    phone_country: "US",
+    contact_first_name: faker.person.firstName(),
+    contact_last_name: faker.person.lastName(),
   },
   business: {
-    tax_number: "1234567890",
-    naics_code: "111111",
-    business_description: "Test business description",
-    trading_symbol: "TEST",
-    owned_by: "John Doe",
-    website_url: "https://www.example.com",
+    tax_number: faker.string.numeric(9).replace(/(\d{2})(\d{7})/, "$1-$2"), // US EIN format
+    naics_code: faker.string.numeric(6),
+    business_description: faker.company.catchPhrase(),
+    trading_symbol: faker.string.alpha(4).toUpperCase(),
+    owned_by: `${faker.person.firstName()} ${faker.person.lastName()}`,
+    website_url: faker.internet.url(),
   },
   useFakerForBusinessName: true,
 };
@@ -62,33 +293,33 @@ const BUSINESS_ENTITY_CONFIG = {
  */
 const REPRESENTATIVE_CONFIG = {
   personal: {
-    first_name: "John",
-    last_name: "Doe",
-    email: "john.doe@example.com",
-    phone: "+573563525448",
-    date_of_birth: "1985-05-15T00:00:00Z",
-    citizenship: "CO",
+    first_name: faker.person.firstName(),
+    last_name: faker.person.lastName(),
+    email: faker.internet.email(),
+    phone: faker.phone.number("##########"),
+    date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
+    citizenship: "US",
   },
   address: {
-    residential_address: "456 Oak Avenue",
-    residential_address2: "Apt 5B",
-    residential_city: "Bogota",
-    residential_state_province_region: "Cundinamarca",
-    residential_postal_code: "510004",
-    residential_country: "CO",
+    residential_address: faker.location.streetAddress(),
+    residential_address2: faker.location.secondaryAddress(),
+    residential_city: faker.location.city(),
+    residential_state_province_region: faker.location.state({ abbreviated: true }),
+    residential_postal_code: faker.location.zipCode("#####"),
+    residential_country: "US",
   },
   role: {
     responsibility: RepresentativeResponsibility.DIRECTOR,
     is_signer: true,
-    job_title: "Chief Executive Officer",
-    ownership_percentage: 50.5,
+    job_title: faker.person.jobTitle(),
+    ownership_percentage: faker.number.float({ min: 0, max: 100, fractionDigits: 1 }),
   },
   documents: {
-    document_number: "DL123456789",
-    document_issue_date: "2020-01-15T00:00:00Z",
-    document_expiration_date: "2033-01-15T00:00:00Z",
-    passport_number: "P123456789",
-    tax_number: "1234567890",
+    document_number: faker.string.alphanumeric(9).toUpperCase(),
+    document_issue_date: faker.date.past({ years: 3 }).toISOString(),
+    document_expiration_date: faker.date.future({ years: 10 }).toISOString(),
+    passport_number: faker.string.alphanumeric(9).toUpperCase(),
+    tax_number: faker.string.numeric(9).replace(/(\d{3})(\d{2})(\d{4})/, "$1-$2-$3"), // US SSN format
   },
 };
 
@@ -97,44 +328,44 @@ const REPRESENTATIVE_CONFIG = {
  */
 const PERSONAL_BENEFICIARY_CONFIG = {
   corridor: {
-    bank_country: "CO",
+    bank_country: "US",
     currency: "USD",
-    beneficiary_country: "CO",
+    beneficiary_country: "US",
   },
   personal: {
-    first_name: "Jane",
-    last_name: "Smith",
-    email: "beneficiary.personal@example.com",
-    phone: "+573563525448",
-    phone_country: "CO",
-    date_of_birth: "1990-06-15T00:00:00Z",
+    first_name: faker.person.firstName(),
+    last_name: faker.person.lastName(),
+    email: faker.internet.email(),
+    phone: faker.phone.number("##########"),
+    phone_country: "US",
+    date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
   },
   address: {
-    address1: "789 Personal Street",
-    address2: "Apt 3C",
-    city: "Bogota",
-    state_province_region: "Cundinamarca",
-    postal_code: "510004",
-    country: "CO",
+    address1: faker.location.streetAddress(),
+    address2: faker.location.secondaryAddress(),
+    city: faker.location.city(),
+    state_province_region: faker.location.state({ abbreviated: true }),
+    postal_code: faker.location.zipCode("#####"),
+    country: "US",
   },
   bank: {
-    name_on_bank_account: "Jane Smith",
-    swift_bic: "COLOCO33",
+    name_on_bank_account: `${faker.person.firstName()} ${faker.person.lastName()}`,
+    swift_bic: faker.string.alpha(4).toUpperCase() + "US" + faker.string.alphanumeric(2).toUpperCase() + faker.string.alphanumeric(3).toUpperCase(), // SWIFT BIC format
     account_type: "checking" as const,
-    account_number: "1234567890",
-    routing_code: "123456789",
-    bank_name: "Test Bank",
-    branch_name: "Main Branch",
-    bank_address1: "456 Bank Street",
-    bank_address2: "Suite 200",
-    bank_city: "Bogota",
-    bank_state_province_region: "Cundinamarca",
-    bank_postal_code: "510004",
-    bank_country: "CO",
+    account_number: faker.string.numeric(10),
+    routing_code: faker.string.numeric(9), // US routing number
+    bank_name: faker.company.name() + " Bank",
+    branch_name: faker.location.city() + " Branch",
+    bank_address1: faker.location.streetAddress(),
+    bank_address2: faker.location.secondaryAddress(),
+    bank_city: faker.location.city(),
+    bank_state_province_region: faker.location.state({ abbreviated: true }),
+    bank_postal_code: faker.location.zipCode("#####"),
+    bank_country: "US",
   },
   tax: {
-    tax_number: "9876543210",
-    tax_number_expiration: "2030-12-31T00:00:00Z",
+    tax_number: faker.string.numeric(9).replace(/(\d{3})(\d{2})(\d{4})/, "$1-$2-$3"), // US SSN format
+    tax_number_expiration: faker.date.future({ years: 5 }).toISOString(),
   },
 };
 
@@ -148,31 +379,31 @@ const BUSINESS_BENEFICIARY_CONFIG = {
     beneficiary_country: "US",
   },
   business: {
-    email: "beneficiary.business@example.com",
-    phone: "+15551234567",
+    email: faker.internet.email(),
+    phone: faker.phone.number("##########"),
     phone_country: "US",
-    tax_number: "12-3456789",
+    tax_number: faker.string.numeric(9).replace(/(\d{2})(\d{7})/, "$1-$2"), // US EIN format
   },
   address: {
-    business_address1: "789 Business Avenue",
-    business_address2: "Suite 500",
-    business_city: "New York",
-    business_state_province_region: "NY",
-    business_postal_code: "10001",
+    business_address1: faker.location.streetAddress(),
+    business_address2: faker.location.secondaryAddress(),
+    business_city: faker.location.city(),
+    business_state_province_region: faker.location.state({ abbreviated: true }),
+    business_postal_code: faker.location.zipCode("#####"),
     business_country: "US",
   },
   bank: {
-    swift_bic: "CHASUS33",
+    swift_bic: faker.string.alpha(4).toUpperCase() + "US" + faker.string.alphanumeric(2).toUpperCase() + faker.string.alphanumeric(3).toUpperCase(), // SWIFT BIC format
     account_type: "checking" as const,
-    account_number: "9876543210",
-    routing_code: "021000021",
-    bank_name: "Test Bank",
-    branch_name: "Business Branch",
-    bank_address1: "456 Bank Street",
-    bank_address2: "Suite 300",
-    bank_city: "New York",
-    bank_state_province_region: "NY",
-    bank_postal_code: "10001",
+    account_number: faker.string.numeric(10),
+    routing_code: faker.string.numeric(9), // US routing number
+    bank_name: faker.company.name() + " Bank",
+    branch_name: faker.location.city() + " Branch",
+    bank_address1: faker.location.streetAddress(),
+    bank_address2: faker.location.secondaryAddress(),
+    bank_city: faker.location.city(),
+    bank_state_province_region: faker.location.state({ abbreviated: true }),
+    bank_postal_code: faker.location.zipCode("#####"),
     bank_country: "US",
   },
   useFakerForBusinessName: true,
@@ -183,36 +414,18 @@ const BUSINESS_BENEFICIARY_CONFIG = {
 // ============================================================================
 
 /**
- * Build business entity data from configuration
+ * Build business entity data from TEST_INPUTS
+ * Always uses faker for business name to ensure unique test data
  */
 function buildBusinessEntityData(): CreateBusinessEntityInput {
-  const businessName = BUSINESS_ENTITY_CONFIG.useFakerForBusinessName
-    ? faker.company.name()
-    : "Test Business LLC";
-  const email = BUSINESS_ENTITY_CONFIG.email.replace('@', `${Date.now()}@`);
+  const businessName = faker.company.name();
+  const email = faker.internet.email();
 
   return {
+    ...TEST_INPUTS.createBusinessEntity,
     email,
-    phone: BUSINESS_ENTITY_CONFIG.contact.phone,
-    phone_country: BUSINESS_ENTITY_CONFIG.contact.phone_country,
-    tax_number: BUSINESS_ENTITY_CONFIG.business.tax_number,
-    contact_first_name: BUSINESS_ENTITY_CONFIG.contact.contact_first_name,
-    contact_last_name: BUSINESS_ENTITY_CONFIG.contact.contact_last_name,
     business_name: businessName,
-    business_address1: BUSINESS_ENTITY_CONFIG.address.address1,
-    business_address2: BUSINESS_ENTITY_CONFIG.address.address2,
-    business_country: BUSINESS_ENTITY_CONFIG.address.country,
-    business_city: BUSINESS_ENTITY_CONFIG.address.city,
-    business_state_province_region: BUSINESS_ENTITY_CONFIG.address.state_province_region,
-    business_postal_code: BUSINESS_ENTITY_CONFIG.address.postal_code,
-    business_type: BUSINESS_ENTITY_CONFIG.business_type,
-    accept_terms_and_conditions: true,
-    naics_code: BUSINESS_ENTITY_CONFIG.business.naics_code,
-    business_description: BUSINESS_ENTITY_CONFIG.business.business_description,
-    trading_symbol: BUSINESS_ENTITY_CONFIG.business.trading_symbol,
-    owned_by: BUSINESS_ENTITY_CONFIG.business.owned_by,
     incorporation_date: new Date().toISOString(),
-    website_url: BUSINESS_ENTITY_CONFIG.business.website_url,
   };
 }
 
@@ -225,31 +438,8 @@ async function testCreateBusinessEntity() {
     const routefusionService = new RoutefusionService();
 
     const entityData: CreateBusinessEntityInput = {
-      // Optional fields
-      // user_id: "b5fa316d-7d79-442f-a139-faaa7cfa80de", // Optional: UUID of the user creating the entity
-      phone: "3563525448", // Optional: Contact phone number
-      phone_country: "CO", // Optional: Phone country code
-      business_address2: "Suite 100", // Optional: Second address line
-      business_city: "New York", // Optional: City
-      business_state_province_region: "NY", // Optional: State/Province/Region
-      business_postal_code: "10001", // Optional: Postal/ZIP code
-      business_type: BusinessType.COOPERATIVE, // Optional: Legal business structure
-      tax_number: "12-3456789", // Optional: Tax identification number (EIN, VAT, etc.)
-
-      // Mandatory fields
-      email: "test@example.com", // Required: Contact email address
-      contact_first_name: "John", // Required: First name of contact person
-      contact_last_name: "Doe", // Required: Last name of contact person
-      business_name: "BeroNox Corporation", // Required: Legal business name
-      business_address1: "123 Main St", // Required: Primary business address
-      business_country: "US", // Required: ISO 3166-1 country code
-      accept_terms_and_conditions: true, // Required: Must be true to create entity
-      naics_code: "111111", // Required: NAICS code
-      business_description: "Business description", // Required: Business description
-      trading_symbol: "BERONOX", // Required: Trading symbol
-      owned_by: "John Doe", // Required: Owner name
-      incorporation_date: new Date().toISOString(), // Required: Incorporation date
-      website_url: "https://www.example.com", // Required: Website URL
+      ...TEST_INPUTS.createBusinessEntity,
+      incorporation_date: new Date().toISOString(), // Update timestamp
     };
 
     // console.log(JSON.stringify(entityData, null, 2));
@@ -267,7 +457,7 @@ async function testCreateBusinessEntity() {
 
 async function testGetBusinessEntity() {
   try {
-    const businessId = "63cdba52-cc6d-450e-9a20-83c9b40a251e";
+    const businessId = TEST_INPUTS.testIds.businessId;
     const routefusionService = new RoutefusionService();
     const entity = await routefusionService.getBusinessEntity(businessId);
     console.log("Business entity retrieved:", JSON.stringify(entity, null, 2));
@@ -280,11 +470,8 @@ async function testCreateUser() {
   try {
     const routefusionService = new RoutefusionService();
     const userData: CreateUserInput = {
-      email: `test${Date.now()}@example.com`,
-      first_name: "John",
-      last_name: "Doe",
-      admin: false,
-      send_invite_email: false,
+      ...TEST_INPUTS.createUser,
+      email: `test${Date.now()}@example.com`, // Add timestamp for uniqueness
     };
     const userId = await routefusionService.createUser(userData);
     console.log("User created. User ID:", userId);
@@ -296,7 +483,7 @@ async function testCreateUser() {
 async function testGetUser() {
   try {
     const routefusionService = new RoutefusionService();
-    const userId = "b5fa316d-7d79-442f-a139-faaa7cfa80de";
+    const userId = TEST_INPUTS.testIds.userId;
     const user = await routefusionService.getUser(userId);
     console.log("User retrieved:", JSON.stringify(user, null, 2));
   } catch (error) {
@@ -311,13 +498,13 @@ async function testGetUser() {
   }
 }
 
-async function testCreateWallet(businessIdParam: string) {
+async function testCreateWallet(businessIdParam?: string) {
   try {
-    const businessId = businessIdParam || '63cdba52-cc6d-450e-9a20-83c9b40a251e' as UUID;
+    const businessId = (businessIdParam || TEST_INPUTS.testIds.businessId) as UUID;
     const routefusionService = new RoutefusionService();
     const wallet = await routefusionService.createWallet({
-      entityId: businessId as UUID,
-      currency: 'USD',
+      ...TEST_INPUTS.createWallet,
+      entityId: businessId,
     });
     console.log("Wallet created:", JSON.stringify(wallet, null, 2));
   } catch (error) {
@@ -325,13 +512,14 @@ async function testCreateWallet(businessIdParam: string) {
   }
 }
 
-async function testAddBalanceToWallet(walletIdParam: string, amount?: string) {
+async function testAddBalanceToWallet(walletIdParam?: string, amount?: string) {
   try {
-    const walletId = walletIdParam || 'your-wallet-id-here' as UUID;
-    const balanceAmount = amount || '100.00';
+    const walletId = (walletIdParam || TEST_INPUTS.testIds.walletId) as UUID;
+    const balanceAmount = amount || TEST_INPUTS.addBalanceToWallet.amount;
     const routefusionService = new RoutefusionService();
     const result = await routefusionService.addBalanceToWallet({
-      wallet_id: walletId as UUID,
+      ...TEST_INPUTS.addBalanceToWallet,
+      wallet_id: walletId,
       amount: balanceAmount,
     });
     console.log(`Balance added to wallet ${walletId}:`, result);
@@ -349,24 +537,23 @@ async function testAddBalanceToWallet(walletIdParam: string, amount?: string) {
 }
 
 async function testCreateTransfer(
-  userIdParam: string,
-  entityIdParam: string,
-  beneficiaryIdParam: string,
+  userIdParam?: string,
+  entityIdParam?: string,
+  beneficiaryIdParam?: string,
   walletIdParam?: string
 ) {
   try {
-    const userId = userIdParam || 'your-user-id-here' as UUID;
-    const entityId = entityIdParam || 'your-entity-id-here' as UUID;
-    const beneficiaryId = beneficiaryIdParam || 'your-beneficiary-id-here' as UUID;
+    const userId = (userIdParam || TEST_INPUTS.testIds.userId) as UUID;
+    const entityId = (entityIdParam || TEST_INPUTS.testIds.businessId) as UUID;
+    const beneficiaryId = (beneficiaryIdParam || TEST_INPUTS.testIds.beneficiaryId) as UUID;
     const walletId = walletIdParam as UUID | undefined;
 
     const routefusionService = new RoutefusionService();
     const transferId = await routefusionService.createTransfer({
-      user_id: userId as UUID,
-      entity_id: entityId as UUID,
-      beneficiary_id: beneficiaryId as UUID,
-      purpose_of_payment: "Payment for services",
-      source_amount: "100.00",
+      ...TEST_INPUTS.createTransfer,
+      user_id: userId,
+      entity_id: entityId,
+      beneficiary_id: beneficiaryId,
       wallet_id: walletId,
       reference: `Test transfer ${Date.now()}`,
     });
@@ -384,7 +571,7 @@ async function testCreateTransfer(
   }
 }
 
-async function testUploadEntityDocument(entityId: string) {
+async function testUploadEntityDocument(entityId?: string) {
   try {
     const routefusionService = new RoutefusionService();
 
@@ -402,9 +589,9 @@ async function testUploadEntityDocument(entityId: string) {
     const file = new Blob([fileBuffer], { type: "text/plain" });
 
     const document = await routefusionService.uploadEntityDocument({
-      entityId: entityId as UUID,
+      ...TEST_INPUTS.uploadEntityDocument,
+      entityId: (entityId || TEST_INPUTS.testIds.businessId) as UUID,
       file: file,
-      file_enum: FileEnum.PASSPORT,
     });
     console.log("Entity document uploaded:", JSON.stringify(document, null, 2));
   } catch (error) {
@@ -419,10 +606,11 @@ async function testUploadEntityDocument(entityId: string) {
   }
 }
 
-async function testFinalizeEntity(entityId: string) {
+async function testFinalizeEntity(entityId?: string) {
   try {
     const routefusionService = new RoutefusionService();
-    const finalizedEntityId = await routefusionService.finalizeEntity(entityId);
+    const id = entityId || TEST_INPUTS.testIds.businessId;
+    const finalizedEntityId = await routefusionService.finalizeEntity(id);
     console.log("Entity finalized. Entity ID:", finalizedEntityId);
     console.log("Note: The entity will immediately move to a pending state after finalizing.");
   } catch (error) {
@@ -437,44 +625,13 @@ async function testFinalizeEntity(entityId: string) {
   }
 }
 
-async function testCreateRepresentative(entityId: string) {
+async function testCreateRepresentative(entityId?: string) {
   try {
     const routefusionService = new RoutefusionService();
 
     const representativeData: CreateRepresentativeInput = {
-      entity_id: entityId as UUID,
-      representative: {
-        // Personal Information
-        first_name: "John",
-        last_name: "Doe",
-        email: "test@example.com",
-        phone: "573563525448",
-        date_of_birth: "1985-05-15T00:00:00Z",
-        citizenship: "CO",
-
-        // Address Information
-        residential_address: "456 Oak Avenue",
-        residential_address2: "Apt 5B",
-        residential_city: "Bogota",
-        residential_state_province_region: "Cundinamarca",
-        residential_postal_code: "510004",
-        residential_country: "CO",
-
-        // Role and Responsibilities
-        responsibility: RepresentativeResponsibility.DIRECTOR,
-        is_signer: true,
-        job_title: "Chief Executive Officer",
-        ownership_percentage: 50.5,
-
-        // Document Information
-        document_number: "DL123456789",
-        document_issue_date: "2020-01-15T00:00:00Z",
-        document_expiration_date: "2033-01-15T00:00:00Z",
-        passport_number: "P123456789",
-
-        // Tax Information
-        tax_number: "1234567890",
-      },
+      ...TEST_INPUTS.createRepresentative,
+      entity_id: (entityId || TEST_INPUTS.testIds.businessId) as UUID,
     };
 
     const representativeId = await routefusionService.createRepresentative(representativeData);
@@ -491,44 +648,13 @@ async function testCreateRepresentative(entityId: string) {
   }
 }
 
-async function testUpdateRepresentative(representativeId: string) {
+async function testUpdateRepresentative(representativeId?: string) {
   try {
     const routefusionService = new RoutefusionService();
 
     const updateData: UpdateRepresentativeInput = {
-      updateRepresentativeId: representativeId as UUID,
-      representative: {
-        // Personal Information
-        //first_name: "Jane",
-        //last_name: "Smith-Updated",
-        //email: "jane.smith.updated@example.com",
-        //phone: "+1234567891",
-        //date_of_birth: "1985-05-15T00:00:00Z",
-        //citizenship: "US",
-
-        // Address Information
-        //residential_address: "789 Pine Street",
-        //residential_address2: "Suite 200",
-        //residential_city: "San Francisco",
-        //residential_state_province_region: "CA",
-        //residential_postal_code: "94102",
-        //residential_country: "US",
-
-        // Role and Responsibilities
-        //responsibility: RepresentativeResponsibility.DIRECTOR, // Can be: "ultimate_beneficial_owner", "authorized rep", "director"
-        //is_signer: true,
-        //job_title: "Chief Technology Officer",
-        //ownership_percentage: 30.0,
-
-        // Document Information (using document_* fields for update)
-        //document_number: "DL987654321",
-        //document_issue_date: "2021-03-20T00:00:00Z",
-        document_expiration_date: "2026-03-20T00:00:00Z",
-        //passport_number: "P987654321",
-
-        // Tax Information
-        //tax_number: "987-65-4321",
-      },
+      ...TEST_INPUTS.updateRepresentative,
+      updateRepresentativeId: (representativeId || TEST_INPUTS.testIds.representativeId) as UUID,
     };
 
     const result = await routefusionService.updateRepresentative(updateData);
@@ -545,11 +671,12 @@ async function testUpdateRepresentative(representativeId: string) {
   }
 }
 
-async function testDeleteRepresentative(representativeId: string) {
+async function testDeleteRepresentative(representativeId?: string) {
   try {
     const routefusionService = new RoutefusionService();
-    const result = await routefusionService.deleteRepresentative(representativeId);
-    console.log("Representative deleted. ID:", representativeId, "Result:", result);
+    const id = representativeId || TEST_INPUTS.testIds.representativeId;
+    const result = await routefusionService.deleteRepresentative(id);
+    console.log("Representative deleted. ID:", id, "Result:", result);
   } catch (error) {
     console.error("\nError occurred during test:");
     if (error instanceof Error) {
@@ -562,7 +689,7 @@ async function testDeleteRepresentative(representativeId: string) {
   }
 }
 
-async function testUploadRepresentativeDocument(representativeId: string) {
+async function testUploadRepresentativeDocument(representativeId?: string) {
   try {
     const routefusionService = new RoutefusionService();
 
@@ -580,11 +707,11 @@ async function testUploadRepresentativeDocument(representativeId: string) {
     const file = new Blob([fileBuffer], { type: "text/plain" });
 
     const document = await routefusionService.uploadRepresentativeDocument({
-      representativeId: representativeId as UUID,
+      ...TEST_INPUTS.uploadRepresentativeDocument,
+      representativeId: (representativeId || TEST_INPUTS.testIds.representativeId) as UUID,
       file: file,
-      file_enum: FileEnum.PASSPORT,
     });
-    console.log("Representative document uploaded. ID:", representativeId, "Document:", JSON.stringify(document, null, 2));
+    console.log("Representative document uploaded. ID:", representativeId || TEST_INPUTS.testIds.representativeId, "Document:", JSON.stringify(document, null, 2));
   } catch (error) {
     console.error("\nError occurred during test:");
     if (error instanceof Error) {
@@ -600,11 +727,7 @@ async function testUploadRepresentativeDocument(representativeId: string) {
 async function testGetEntityRequiredFields() {
   try {
     const routefusionService = new RoutefusionService();
-    const requiredFields = await routefusionService.getEntityRequiredFields({
-      country: "CO",
-      entity_type: EntityType.BUSINESS,
-      business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
-    });
+    const requiredFields = await routefusionService.getEntityRequiredFields(TEST_INPUTS.getEntityRequiredFields);
     console.log("Entity required fields:", JSON.stringify(requiredFields, null, 2));
   } catch (error) {
     console.error("\nError occurred during test:");
@@ -621,9 +744,7 @@ async function testGetEntityRequiredFields() {
 async function testGetRepresentativeRequiredFields() {
   try {
     const routefusionService = new RoutefusionService();
-    const requiredFields = await routefusionService.getRepresentativeRequiredFields({
-      country: "US",
-    });
+    const requiredFields = await routefusionService.getRepresentativeRequiredFields(TEST_INPUTS.getRepresentativeRequiredFields);
     console.log("Representative required fields:", JSON.stringify(requiredFields, null, 2));
   } catch (error) {
     console.error("\nError occurred during test:");
@@ -661,8 +782,8 @@ async function testCompleteOnboardingFlow() {
     if (USER_CONFIG.createNewUser) {
       try {
         const userData: CreateUserInput = {
+          ...TEST_INPUTS.createUser,
           email: `test${Date.now()}@example.com`,
-          ...USER_CONFIG.userData,
         };
         const userResult = await routefusionService.createUser(userData);
         userId = userResult.routefusionUserID;
@@ -682,9 +803,9 @@ async function testCompleteOnboardingFlow() {
 
     const validationResult = await routefusionService.validateBusinessEntityDataToSubmit(
       entityData,
-      BUSINESS_ENTITY_CONFIG.country,
-      BUSINESS_ENTITY_CONFIG.entity_type,
-      BUSINESS_ENTITY_CONFIG.business_type
+      TEST_INPUTS.getEntityRequiredFields.country!,
+      TEST_INPUTS.getEntityRequiredFields.entity_type!,
+      TEST_INPUTS.getEntityRequiredFields.business_type!
     );
 
     if (!validationResult.success) {
@@ -719,19 +840,14 @@ async function testCompleteOnboardingFlow() {
     // Step 5: Create representative
     console.log("\nStep 5: Creating representative...");
     const representativeData: CreateRepresentativeInput = {
+      ...TEST_INPUTS.createRepresentative,
       entity_id: entityId as UUID,
-      representative: {
-        ...REPRESENTATIVE_CONFIG.personal,
-        ...REPRESENTATIVE_CONFIG.address,
-        ...REPRESENTATIVE_CONFIG.role,
-        ...REPRESENTATIVE_CONFIG.documents,
-      },
     };
     const validationResultRepresentative = await routefusionService.validateRepresentativeDataToSubmit(
       representativeData.representative,
-      BUSINESS_ENTITY_CONFIG.country,
-      BUSINESS_ENTITY_CONFIG.entity_type,
-      BUSINESS_ENTITY_CONFIG.business_type
+      TEST_INPUTS.getEntityRequiredFields.country!,
+      TEST_INPUTS.getEntityRequiredFields.entity_type!,
+      TEST_INPUTS.getEntityRequiredFields.business_type!
     );
     if (!validationResultRepresentative.success) {
       console.log("Validation failed:", validationResultRepresentative.errors);
@@ -767,53 +883,23 @@ async function testCompleteOnboardingFlow() {
     console.log("\nStep 8: Creating personal beneficiary...");
 
     // Get required fields first to understand what's needed
-    const personalBeneficiaryRequiredFields = await routefusionService.getBeneficiaryRequiredFields({
-      bank_country: PERSONAL_BENEFICIARY_CONFIG.corridor.bank_country,
-      currency: PERSONAL_BENEFICIARY_CONFIG.corridor.currency,
-      beneficiary_country: PERSONAL_BENEFICIARY_CONFIG.corridor.beneficiary_country,
-    });
+    const personalBeneficiaryRequiredFields = await routefusionService.getBeneficiaryRequiredFields(TEST_INPUTS.getBeneficiaryRequiredFields);
     console.log("Personal beneficiary required fields:", JSON.stringify(personalBeneficiaryRequiredFields.personal, null, 2));
 
-    const personalBeneficiaryEmail = PERSONAL_BENEFICIARY_CONFIG.personal.email.replace('@', `${Date.now()}@`);
+    const personalBeneficiaryEmail = TEST_INPUTS.createPersonalBeneficiary.email.replace('@', `${Date.now()}@`);
     const personalBeneficiaryData: CreatePersonalBeneficiaryInput = {
+      ...TEST_INPUTS.createPersonalBeneficiary,
       user_id: userId as UUID,
       entity_id: entityId as UUID,
       email: personalBeneficiaryEmail,
-      phone: PERSONAL_BENEFICIARY_CONFIG.personal.phone,
-      phone_country: PERSONAL_BENEFICIARY_CONFIG.personal.phone_country,
-      first_name: PERSONAL_BENEFICIARY_CONFIG.personal.first_name,
-      last_name: PERSONAL_BENEFICIARY_CONFIG.personal.last_name,
-      address1: PERSONAL_BENEFICIARY_CONFIG.address.address1,
-      address2: PERSONAL_BENEFICIARY_CONFIG.address.address2,
-      city: PERSONAL_BENEFICIARY_CONFIG.address.city,
-      state_province_region: PERSONAL_BENEFICIARY_CONFIG.address.state_province_region,
-      postal_code: PERSONAL_BENEFICIARY_CONFIG.address.postal_code,
-      country: PERSONAL_BENEFICIARY_CONFIG.address.country as any,
-      tax_number: PERSONAL_BENEFICIARY_CONFIG.tax.tax_number,
-      name_on_bank_account: PERSONAL_BENEFICIARY_CONFIG.bank.name_on_bank_account,
-      swift_bic: PERSONAL_BENEFICIARY_CONFIG.bank.swift_bic,
-      account_type: PERSONAL_BENEFICIARY_CONFIG.bank.account_type,
-      account_number: PERSONAL_BENEFICIARY_CONFIG.bank.account_number,
-      routing_code: PERSONAL_BENEFICIARY_CONFIG.bank.routing_code,
-      currency: PERSONAL_BENEFICIARY_CONFIG.corridor.currency as any,
-      bank_name: PERSONAL_BENEFICIARY_CONFIG.bank.bank_name,
-      branch_name: PERSONAL_BENEFICIARY_CONFIG.bank.branch_name,
-      bank_address1: PERSONAL_BENEFICIARY_CONFIG.bank.bank_address1,
-      bank_address2: PERSONAL_BENEFICIARY_CONFIG.bank.bank_address2,
-      bank_city: PERSONAL_BENEFICIARY_CONFIG.bank.bank_city,
-      bank_state_province_region: PERSONAL_BENEFICIARY_CONFIG.bank.bank_state_province_region,
-      bank_postal_code: PERSONAL_BENEFICIARY_CONFIG.bank.bank_postal_code,
-      bank_country: PERSONAL_BENEFICIARY_CONFIG.bank.bank_country as any,
-      tax_number_expiration: PERSONAL_BENEFICIARY_CONFIG.tax.tax_number_expiration,
-      date_of_birth: PERSONAL_BENEFICIARY_CONFIG.personal.date_of_birth,
     };
 
     // Validate personal beneficiary data
     const personalValidationResult = await routefusionService.validatePersonalBeneficiaryDataToSubmit(
       personalBeneficiaryData,
-      PERSONAL_BENEFICIARY_CONFIG.corridor.bank_country,
-      PERSONAL_BENEFICIARY_CONFIG.corridor.currency,
-      PERSONAL_BENEFICIARY_CONFIG.corridor.beneficiary_country
+      TEST_INPUTS.getBeneficiaryRequiredFields.bank_country,
+      TEST_INPUTS.getBeneficiaryRequiredFields.currency,
+      TEST_INPUTS.getBeneficiaryRequiredFields.beneficiary_country
     );
 
     if (!personalValidationResult.success) {
@@ -831,52 +917,29 @@ async function testCompleteOnboardingFlow() {
 
     // Get required fields first to understand what's needed
     const businessBeneficiaryRequiredFields = await routefusionService.getBeneficiaryRequiredFields({
-      bank_country: BUSINESS_BENEFICIARY_CONFIG.corridor.bank_country,
-      currency: BUSINESS_BENEFICIARY_CONFIG.corridor.currency,
-      beneficiary_country: BUSINESS_BENEFICIARY_CONFIG.corridor.beneficiary_country,
+      bank_country: "US" as ISO3166_1, // Different from personal beneficiary
+      currency: "USD",
+      beneficiary_country: "US" as ISO3166_1,
     });
     console.log("Business beneficiary required fields:", JSON.stringify(businessBeneficiaryRequiredFields.business, null, 2));
 
-    const beneficiaryBusinessName = BUSINESS_BENEFICIARY_CONFIG.useFakerForBusinessName
-      ? faker.company.name()
-      : "Beneficiary Business Corp";
-    const businessBeneficiaryEmail = BUSINESS_BENEFICIARY_CONFIG.business.email.replace('@', `${Date.now()}@`);
+    const beneficiaryBusinessName = faker.company.name();
+    const businessBeneficiaryEmail = TEST_INPUTS.createBusinessBeneficiary.email.replace('@', `${Date.now()}@`);
     const businessBeneficiaryData: CreateBusinessBeneficiaryInput = {
+      ...TEST_INPUTS.createBusinessBeneficiary,
       user_id: userId as UUID,
       entity_id: entityId as UUID,
       email: businessBeneficiaryEmail,
-      phone: BUSINESS_BENEFICIARY_CONFIG.business.phone,
-      phone_country: BUSINESS_BENEFICIARY_CONFIG.business.phone_country,
       business_name: beneficiaryBusinessName,
-      business_address1: BUSINESS_BENEFICIARY_CONFIG.address.business_address1,
-      business_address2: BUSINESS_BENEFICIARY_CONFIG.address.business_address2,
-      business_city: BUSINESS_BENEFICIARY_CONFIG.address.business_city,
-      business_state_province_region: BUSINESS_BENEFICIARY_CONFIG.address.business_state_province_region,
-      business_postal_code: BUSINESS_BENEFICIARY_CONFIG.address.business_postal_code,
-      business_country: BUSINESS_BENEFICIARY_CONFIG.address.business_country as any,
-      tax_number: BUSINESS_BENEFICIARY_CONFIG.business.tax_number,
       name_on_bank_account: beneficiaryBusinessName,
-      swift_bic: BUSINESS_BENEFICIARY_CONFIG.bank.swift_bic,
-      account_type: BUSINESS_BENEFICIARY_CONFIG.bank.account_type,
-      account_number: BUSINESS_BENEFICIARY_CONFIG.bank.account_number,
-      routing_code: BUSINESS_BENEFICIARY_CONFIG.bank.routing_code,
-      currency: BUSINESS_BENEFICIARY_CONFIG.corridor.currency as any,
-      bank_name: BUSINESS_BENEFICIARY_CONFIG.bank.bank_name,
-      branch_name: BUSINESS_BENEFICIARY_CONFIG.bank.branch_name,
-      bank_address1: BUSINESS_BENEFICIARY_CONFIG.bank.bank_address1,
-      bank_address2: BUSINESS_BENEFICIARY_CONFIG.bank.bank_address2,
-      bank_city: BUSINESS_BENEFICIARY_CONFIG.bank.bank_city,
-      bank_state_province_region: BUSINESS_BENEFICIARY_CONFIG.bank.bank_state_province_region,
-      bank_postal_code: BUSINESS_BENEFICIARY_CONFIG.bank.bank_postal_code,
-      bank_country: BUSINESS_BENEFICIARY_CONFIG.bank.bank_country as any,
     };
 
     // Validate business beneficiary data
     const businessValidationResult = await routefusionService.validateBusinessBeneficiaryDataToSubmit(
       businessBeneficiaryData,
-      BUSINESS_BENEFICIARY_CONFIG.corridor.bank_country,
-      BUSINESS_BENEFICIARY_CONFIG.corridor.currency,
-      BUSINESS_BENEFICIARY_CONFIG.corridor.beneficiary_country
+      "US" as ISO3166_1,
+      "USD",
+      "US" as ISO3166_1
     );
 
     if (!businessValidationResult.success) {
@@ -915,35 +978,13 @@ async function testCompleteOnboardingFlow() {
 async function testValidateBusinessEntityDataToSubmit() {
   try {
     const input: CreateBusinessEntityInput = {
-      // Optional fields
-      // user_id: "b5fa316d-7d79-442f-a139-faaa7cfa80de", // Optional: UUID of the user creating the entity
-      phone: "52536252", // Optional: Contact phone number
-      phone_country: "CO", // Optional: Phone country code
-      business_address2: "Suite 100", // Optional: Second address line
-      business_city: "New York", // Optional: City
-      business_state_province_region: "NY", // Optional: State/Province/Region
-      business_postal_code: "10001", // Optional: Postal/ZIP code
-      business_type: BusinessType.COOPERATIVE, // Optional: Legal business structure
-      tax_number: "12-3456789", // Optional: Tax identification number (EIN, VAT, etc.)
-
-      // Mandatory fields
-      email: "test@example.com", // Required: Contact email address
-      contact_first_name: "John", // Required: First name of contact person
-      contact_last_name: "Doe", // Required: Last name of contact person
-      business_name: "BeroNox Corporation", // Required: Legal business name
-      business_address1: "123 Main St", // Required: Primary business address
-      business_country: "US", // Required: ISO 3166-1 country code
-      accept_terms_and_conditions: true, // Required: Must be true to create entity
-      naics_code: "111111", // Required: NAICS code
-      business_description: "Business description", // Required: Business description
-      trading_symbol: "BERONOX", // Required: Trading symbol
-      owned_by: "John Doe", // Required: Owner name
-      incorporation_date: new Date().toISOString(), // Required: Incorporation date
-      website_url: "https://www.example.com", // Required: Website URL
+      ...TEST_INPUTS.createBusinessEntity,
+      phone: "52536252", // Override for this test
+      incorporation_date: new Date().toISOString(), // Update timestamp
     };
-    const country = "CO";
-    const entity_type = EntityType.BUSINESS;
-    const business_type = BusinessType.LIMITED_LIABILITY_COMPANY;
+    const country = TEST_INPUTS.getEntityRequiredFields.country!;
+    const entity_type = TEST_INPUTS.getEntityRequiredFields.entity_type!;
+    const business_type = TEST_INPUTS.getEntityRequiredFields.business_type!;
     const routefusionService = new RoutefusionService();
     const result = await routefusionService.validateBusinessEntityDataToSubmit(input, country, entity_type, business_type);
     console.log("Validation result:", JSON.stringify(result, null, 2));
@@ -959,47 +1000,16 @@ async function testValidateBusinessEntityDataToSubmit() {
 }
 
 
-async function testValidateRepresentativeDataToSubmit(entityId: string) {
+async function testValidateRepresentativeDataToSubmit(entityId?: string) {
   try {
     const representativeData: CreateRepresentativeInput = {
-      entity_id: entityId as UUID,
-      representative: {
-        // Personal Information
-        first_name: "John",
-        last_name: "Doe",
-        email: "test@example.com",
-        phone: "573563525448",
-        date_of_birth: "1985-05-15T00:00:00Z",
-        citizenship: "CO",
-
-        // Address Information
-        residential_address: "456 Oak Avenue",
-        residential_address2: "Apt 5B",
-        residential_city: "Bogota",
-        residential_state_province_region: "Cundinamarca",
-        residential_postal_code: "510004",
-        residential_country: "CO",
-
-        // Role and Responsibilities
-        responsibility: RepresentativeResponsibility.DIRECTOR,
-        is_signer: true,
-        job_title: "Chief Executive Officer",
-        ownership_percentage: 50.5,
-
-        // Document Information
-        document_number: "DL123456789",
-        document_issue_date: "2020-01-15T00:00:00Z",
-        document_expiration_date: "2033-01-15T00:00:00Z",
-        passport_number: "P123456789",
-
-        // Tax Information
-        tax_number: "1234567890",
-      },
+      ...TEST_INPUTS.createRepresentative,
+      entity_id: (entityId || TEST_INPUTS.testIds.businessId) as UUID,
     };
 
-    const country = "CO";
-    const entity_type = EntityType.BUSINESS;
-    const business_type = BusinessType.LIMITED_LIABILITY_COMPANY;
+    const country = TEST_INPUTS.getEntityRequiredFields.country!;
+    const entity_type = TEST_INPUTS.getEntityRequiredFields.entity_type!;
+    const business_type = TEST_INPUTS.getEntityRequiredFields.business_type!;
     const routefusionService = new RoutefusionService();
     const result = await routefusionService.validateRepresentativeDataToSubmit(representativeData.representative, country, entity_type, business_type);
     console.log("Validation result:", JSON.stringify(result, null, 2));
@@ -1016,41 +1026,15 @@ async function testValidateRepresentativeDataToSubmit(entityId: string) {
 
 async function testCreatePersonalBeneficiary(userIdParam?: string, entityIdParam?: string) {
   try {
-    const userId = userIdParam || 'b5fa316d-7d79-442f-a139-faaa7cfa80de' as UUID;
-    const entityId = entityIdParam || '34354c4e-d88f-458a-b9ce-45772447730d' as UUID;
+    const userId = (userIdParam || TEST_INPUTS.testIds.userId) as UUID;
+    const entityId = (entityIdParam || TEST_INPUTS.testIds.businessId) as UUID;
     const routefusionService = new RoutefusionService();
 
     const beneficiaryData: CreatePersonalBeneficiaryInput = {
-      user_id: userId as UUID,
-      entity_id: entityId as UUID,
-      email: "beneficiary.personal@example.com",
-      phone: "+573563525448",
-      phone_country: "CO",
-      first_name: "Jane",
-      last_name: "Smith",
-      address1: "789 Personal Street",
-      address2: "Apt 3C",
-      city: "Bogota",
-      state_province_region: "Cundinamarca",
-      postal_code: "510004",
-      country: "CO" as any,
-      tax_number: "9876543210",
-      name_on_bank_account: "Jane Smith",
-      swift_bic: "COLOCO33",
-      account_type: "checking",
-      account_number: "1234567890",
-      routing_code: "123456789",
-      currency: "USD" as any,
-      bank_name: "Test Bank",
-      branch_name: "Main Branch",
-      bank_address1: "456 Bank Street",
-      bank_address2: "Suite 200",
-      bank_city: "Bogota",
-      bank_state_province_region: "Cundinamarca",
-      bank_postal_code: "510004",
-      bank_country: "CO" as any,
-      tax_number_expiration: "2030-12-31T00:00:00Z",
-      date_of_birth: "1990-06-15T00:00:00Z",
+      ...TEST_INPUTS.createPersonalBeneficiary,
+      user_id: userId,
+      entity_id: entityId,
+      email: TEST_INPUTS.createPersonalBeneficiary.email.replace('@', `${Date.now()}@`), // Add timestamp for uniqueness
     };
 
     const beneficiaryId = await routefusionService.createPersonalBeneficiary(beneficiaryData);
@@ -1070,38 +1054,16 @@ async function testCreatePersonalBeneficiary(userIdParam?: string, entityIdParam
 
 async function testCreateBusinessBeneficiary(userIdParam?: string, entityIdParam?: string) {
   try {
-    const userId = userIdParam || 'b5fa316d-7d79-442f-a139-faaa7cfa80de' as UUID;
-    const entityId = entityIdParam || '34354c4e-d88f-458a-b9ce-45772447730d' as UUID;
+    const userId = (userIdParam || TEST_INPUTS.testIds.userId) as UUID;
+    const entityId = (entityIdParam || TEST_INPUTS.testIds.businessId) as UUID;
     const routefusionService = new RoutefusionService();
 
     const beneficiaryData: CreateBusinessBeneficiaryInput = {
-      user_id: userId as UUID,
-      entity_id: entityId as UUID,
-      email: "beneficiary.business@example.com",
-      phone: "+573563525448",
-      phone_country: "CO",
-      business_name: "Beneficiary Business Corp",
-      business_address1: "789 Business Avenue",
-      business_address2: "Suite 500",
-      business_city: "Bogota",
-      business_state_province_region: "Cundinamarca",
-      business_postal_code: "78702",
-      business_country: "US" as any,
-      tax_number: "123-45-6789",
-      name_on_bank_account: "Beneficiary Business Corp",
-      swift_bic: "COLOCO33",
-      account_type: "checking",
-      account_number: "9876543210",
-      routing_code: "113193532",
-      currency: "USD" as any,
-      bank_name: "Test Bank",
-      branch_name: "Business Branch",
-      bank_address1: "456 Bank Street",
-      bank_address2: "Suite 300",
-      bank_city: "NY",
-      bank_state_province_region: "NY",
-      bank_postal_code: "78702",
-      bank_country: "US" as any,
+      ...TEST_INPUTS.createBusinessBeneficiary,
+      user_id: userId,
+      entity_id: entityId,
+      email: TEST_INPUTS.createBusinessBeneficiary.email.replace('@', `${Date.now()}@`), // Add timestamp for uniqueness
+      business_name: faker.company.name(), // Use faker for business name
     };
 
     const beneficiaryId = await routefusionService.createBusinessBeneficiary(beneficiaryData);
@@ -1120,23 +1082,24 @@ async function testCreateBusinessBeneficiary(userIdParam?: string, entityIdParam
 }
 
 async function main() {
-  const representativeId = 'c479de98-7420-4a64-b7d3-45889e66d955';
-  const businessId = '34354c4e-d88f-458a-b9ce-45772447730d';
-  const walletId = '5b23b460-c0a7-49b4-9b95-649749ca3db5';
-  const userId = 'b5fa316d-7d79-442f-a139-faaa7cfa80de';
-  const beneficiaryId = 'your-beneficiary-id-here';
+  // Use TEST_INPUTS.testIds for all test IDs
+  const representativeId = TEST_INPUTS.testIds.representativeId;
+  const businessId = TEST_INPUTS.testIds.businessId;
+  const walletId = TEST_INPUTS.testIds.walletId;
+  const userId = TEST_INPUTS.testIds.userId;
+  const beneficiaryId = TEST_INPUTS.testIds.beneficiaryId;
 
 
   //await testCreateBusinessEntity(); //4354c4e-d88f-458a-b9ce-45772447730d
   // await testCreateUser();
   // await testGetUser();
   // await testGetBusinessEntity();
-  // await testCreateWallet("34354c4e-d88f-458a-b9ce-45772447730d");
+  // await testCreateWallet(businessId);
   // await testAddBalanceToWallet(walletId, "100.00");
   // NOT WORKING await testCreateTransfer(userId, businessId, beneficiaryId, walletId);
-  // await testUploadEntityDocument("34354c4e-d88f-458a-b9ce-45772447730d");
-  //await testFinalizeEntity("34354c4e-d88f-458a-b9ce-45772447730d");
-  //await testCreateRepresentative("c50e4a28-d19d-4b09-a09d-6f59977c1bc7" || businessId);
+  // await testUploadEntityDocument(businessId);
+  //await testFinalizeEntity(businessId);
+  //await testCreateRepresentative(businessId);
   //await testUpdateRepresentative(representativeId);
   //await testDeleteRepresentative(representativeId);
   //await testUploadRepresentativeDocument(representativeId);
