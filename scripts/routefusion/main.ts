@@ -18,7 +18,7 @@ import { faker } from "@faker-js/faker";
 export const TEST_INPUTS = {
   // User inputs
   createUser: {
-    email: faker.internet.email(),
+    email: `test${Date.now()}@example.com`, // Simple format for validation
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
     admin: false,
@@ -27,8 +27,8 @@ export const TEST_INPUTS = {
 
   // Business Entity inputs
   createBusinessEntity: {
-    email: faker.internet.email(),
-    phone: faker.phone.number("##########"), // US phone number without formatting
+    email: `test${Date.now()}@example.com`, // Simple format for validation
+    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
     phone_country: "US",
     contact_first_name: faker.person.firstName(),
     contact_last_name: faker.person.lastName(),
@@ -56,8 +56,8 @@ export const TEST_INPUTS = {
     representative: {
       first_name: faker.person.firstName(),
       last_name: faker.person.lastName(),
-      email: faker.internet.email(),
-      phone: faker.phone.number("##########"), // US phone number
+      email: `test${Date.now()}@example.com`, // Simple format for validation
+      phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
       date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
       citizenship: "US" as ISO3166_1,
       residential_address: faker.location.streetAddress(),
@@ -110,8 +110,8 @@ export const TEST_INPUTS = {
   createPersonalBeneficiary: {
     user_id: "" as UUID, // Will be set dynamically
     entity_id: "" as UUID, // Will be set dynamically
-    email: faker.internet.email(),
-    phone: faker.phone.number("##########"), // US phone number
+    email: `test${Date.now()}@example.com`, // Simple format for validation
+    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
     phone_country: "US" as ISO3166_1,
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
@@ -144,8 +144,8 @@ export const TEST_INPUTS = {
   createBusinessBeneficiary: {
     user_id: "" as UUID, // Will be set dynamically
     entity_id: "" as UUID, // Will be set dynamically
-    email: faker.internet.email(),
-    phone: faker.phone.number("##########"), // US phone number
+    email: `test${Date.now()}@example.com`, // Simple format for validation
+    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
     phone_country: "US",
     business_name: faker.company.name(),
     business_address1: faker.location.streetAddress(),
@@ -262,7 +262,7 @@ const BUSINESS_ENTITY_CONFIG = {
   country: "US",
   business_type: BusinessType.LIMITED_LIABILITY_COMPANY,
   entity_type: EntityType.BUSINESS,
-  email: faker.internet.email(), // Base email, will have timestamp added
+  email: `test${Date.now()}@example.com`, // Simple format for validation
   address: {
     address1: faker.location.streetAddress(),
     address2: faker.location.secondaryAddress(),
@@ -272,7 +272,7 @@ const BUSINESS_ENTITY_CONFIG = {
     country: "US",
   },
   contact: {
-    phone: faker.phone.number("##########"),
+    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
     phone_country: "US",
     contact_first_name: faker.person.firstName(),
     contact_last_name: faker.person.lastName(),
@@ -295,8 +295,8 @@ const REPRESENTATIVE_CONFIG = {
   personal: {
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
-    email: faker.internet.email(),
-    phone: faker.phone.number("##########"),
+    email: `test${Date.now()}@example.com`, // Simple format for validation
+    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
     date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
     citizenship: "US",
   },
@@ -335,8 +335,8 @@ const PERSONAL_BENEFICIARY_CONFIG = {
   personal: {
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
-    email: faker.internet.email(),
-    phone: faker.phone.number("##########"),
+    email: `test${Date.now()}@example.com`, // Simple format for validation
+    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
     phone_country: "US",
     date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
   },
@@ -379,8 +379,8 @@ const BUSINESS_BENEFICIARY_CONFIG = {
     beneficiary_country: "US",
   },
   business: {
-    email: faker.internet.email(),
-    phone: faker.phone.number("##########"),
+    email: `test${Date.now()}@example.com`, // Simple format for validation
+    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
     phone_country: "US",
     tax_number: faker.string.numeric(9).replace(/(\d{2})(\d{7})/, "$1-$2"), // US EIN format
   },
@@ -416,10 +416,13 @@ const BUSINESS_BENEFICIARY_CONFIG = {
 /**
  * Build business entity data from TEST_INPUTS
  * Always uses faker for business name to ensure unique test data
+ * Uses simple email format to ensure it passes API validation
  */
 function buildBusinessEntityData(): CreateBusinessEntityInput {
   const businessName = faker.company.name();
-  const email = faker.internet.email();
+  // Use simple email format that will pass validation: lowercase alphanumeric + @ + domain
+  const emailLocal = faker.string.alphanumeric(10).toLowerCase();
+  const email = `${emailLocal}${Date.now()}@example.com`;
 
   return {
     ...TEST_INPUTS.createBusinessEntity,
@@ -786,8 +789,15 @@ async function testCompleteOnboardingFlow() {
           email: `test${Date.now()}@example.com`,
         };
         const userResult = await routefusionService.createUser(userData);
-        userId = userResult.routefusionUserID;
-        console.log("User created with ID:", userId);
+        // Handle different possible response structures
+        userId = userResult?.routefusionUserID || (userResult as any)?.createUser?.routefusionUserID || (userResult as any)?.id;
+        if (!userId) {
+          console.log("User created but ID not found in response, using default user ID");
+          console.log("Response structure:", JSON.stringify(userResult, null, 2));
+          userId = USER_CONFIG.defaultUserId;
+        } else {
+          console.log("User created with ID:", userId);
+        }
       } catch (error) {
         console.log("User creation failed, using default user ID");
         userId = USER_CONFIG.defaultUserId;
