@@ -266,7 +266,6 @@ export class RoutefusionService {
       }>(mutation, input);
 
       const entityId = result.createBusinessEntity;
-      logger.info(`[RoutefusionService] Created business entity: ${entityId}`);
       return entityId;
     } catch (error) {
       throw error;
@@ -326,7 +325,6 @@ export class RoutefusionService {
         const errorMessages = responseData.errors
           .map((e) => e.message)
           .join(", ");
-        logger.error(`[RoutefusionService] GraphQL errors: ${errorMessages}`);
         throw new RoutefusionGraphQLError(responseData.errors);
       }
 
@@ -334,7 +332,6 @@ export class RoutefusionService {
         throw new Error("No data returned from GraphQL response");
       }
 
-      logger.info(`[RoutefusionService] File upload successful`);
       return responseData.data;
     } catch (error) {
       if (error instanceof Error) {
@@ -379,13 +376,6 @@ export class RoutefusionService {
         singleUpload: UploadDocumentResponse;
       }>(operations, map, input.file);
 
-      logger.info(
-        `[RoutefusionService] Uploaded document: ${JSON.stringify(
-          result,
-          null,
-          2
-        )}`
-      );
       return result.singleUpload;
     } catch (error) {
       logger.error(`[RoutefusionService] Error uploading document: ${error}`);
@@ -425,13 +415,6 @@ export class RoutefusionService {
         singleUpload: UploadDocumentResponse;
       }>(operations, map, input.file);
 
-      logger.info(
-        `[RoutefusionService] Uploaded representative document: ${JSON.stringify(
-          result,
-          null,
-          2
-        )}`
-      );
       return result.singleUpload;
     } catch (error) {
       logger.error(
@@ -469,9 +452,6 @@ export class RoutefusionService {
         finalizeEntity: string;
       }>(mutation, { entity_id: entityId });
 
-      logger.info(
-        `[RoutefusionService] Finalized entity: ${result.finalizeEntity}`
-      );
       return result.finalizeEntity;
     } catch (error) {
       logger.error(`[RoutefusionService] Error finalizing entity: ${error}`);
@@ -502,7 +482,7 @@ export class RoutefusionService {
           $job_title: String
           $ownership_percentage: Int
           $passport_number: String
-          $phone: String
+
           $residential_address: String
           $residential_address2: String
           $residential_city: String
@@ -527,7 +507,7 @@ export class RoutefusionService {
               job_title: $job_title
               ownership_percentage: $ownership_percentage
               passport_number: $passport_number
-              phone: $phone
+
               residential_address: $residential_address
               residential_address2: $residential_address2
               residential_city: $residential_city
@@ -572,9 +552,6 @@ export class RoutefusionService {
         tax_number: representative.tax_number,
       });
 
-      logger.info(
-        `[RoutefusionService] Created representative: ${result.createRepresentative}`
-      );
       return result.createRepresentative;
     } catch (error) {
       logger.error(
@@ -677,9 +654,6 @@ export class RoutefusionService {
         tax_number: representative.tax_number,
       });
 
-      logger.info(
-        `[RoutefusionService] Updated representative: ${result.updateRepresentative}`
-      );
       return result.updateRepresentative;
     } catch (error) {
       logger.error(
@@ -708,9 +682,6 @@ export class RoutefusionService {
         deleteRepresentativeId: representativeId,
       });
 
-      logger.info(
-        `[RoutefusionService] Deleted representative: ${representativeId}`
-      );
       return result.deleteRepresentative;
     } catch (error) {
       logger.error(
@@ -825,7 +796,6 @@ export class RoutefusionService {
       );
 
       const walletId = result.createWallet;
-      logger.info(`[RoutefusionService] Created wallet with ID: ${walletId}`);
 
       // Fetch the full wallet details
       const wallet = await this.getWallet(walletId);
@@ -861,9 +831,6 @@ export class RoutefusionService {
         amount: input.amount,
       });
 
-      logger.info(
-        `[RoutefusionService] Added balance ${input.amount} to wallet ${input.wallet_id}`
-      );
       return result.addBalanceToWallet;
     } catch (error) {
       logger.error(
@@ -896,19 +863,6 @@ export class RoutefusionService {
       createVirtualAccount: VirtualAccount;
     }>(mutation, { input });
 
-    logger.info(
-      `[RoutefusionService] Created virtual account: ${result.createVirtualAccount.id} (${result.createVirtualAccount.name})`
-    );
-    if (result.createVirtualAccount.account_number) {
-      logger.info(
-        `[RoutefusionService] Account Number: ${result.createVirtualAccount.account_number}`
-      );
-      logger.info(
-        `[RoutefusionService] Routing Number: ${
-          result.createVirtualAccount.routing_number || "N/A"
-        }`
-      );
-    }
     return result.createVirtualAccount;
   }
 
@@ -1089,7 +1043,6 @@ export class RoutefusionService {
         business_type: input?.business_type,
       });
 
-      logger.info(`[RoutefusionService] Retrieved entity required fields`);
       return result.entityRequiredFields;
     } catch (error) {
       logger.error(
@@ -1134,9 +1087,6 @@ export class RoutefusionService {
         country: input?.country,
       });
 
-      logger.info(
-        `[RoutefusionService] Retrieved representative required fields`
-      );
       return result.representativeRequiredFields;
     } catch (error) {
       logger.error(
@@ -1194,9 +1144,6 @@ export class RoutefusionService {
         beneficiary_country: input.beneficiary_country,
       });
 
-      logger.info(
-        `[RoutefusionService] Retrieved beneficiary required fields`
-      );
       return result.beneficiaryRequiredFields;
     } catch (error) {
       logger.error(
@@ -1536,14 +1483,8 @@ export class RoutefusionService {
         createPersonalBeneficiary: string;
       }>(mutation, input);
 
-      console.log(
-        `[RoutefusionService] Created personal beneficiary: ${result.createPersonalBeneficiary}`
-      );
       return result.createPersonalBeneficiary;
     } catch (error) {
-      console.log(
-        `[RoutefusionService] Error creating personal beneficiary: ${error}`
-      );
       throw error;
     }
   }
@@ -1622,14 +1563,8 @@ export class RoutefusionService {
         createBusinessBeneficiary: string;
       }>(mutation, input);
 
-      console.log(
-        `[RoutefusionService] Created business beneficiary: ${result.createBusinessBeneficiary}`
-      );
       return result.createBusinessBeneficiary;
     } catch (error) {
-      console.log(
-        `[RoutefusionService] Error creating business beneficiary: ${error}`
-      );
       throw error;
     }
   }
@@ -1674,12 +1609,8 @@ export class RoutefusionService {
         createTransfer: string;
       }>(mutation, input);
 
-      console.log(
-        `[RoutefusionService] Created transfer: ${result.createTransfer}`
-      );
       return result.createTransfer;
     } catch (error) {
-      console.log(`[RoutefusionService] Error creating transfer: ${error}`);
       throw error;
     }
   }
@@ -1704,12 +1635,8 @@ export class RoutefusionService {
         finalizeTransfer: boolean;
       }>(mutation, input);
 
-      console.log(
-        `[RoutefusionService] Finalized transfer: ${input.transfer_id} - ${result.finalizeTransfer}`
-      );
       return result.finalizeTransfer;
     } catch (error) {
-      console.log(`[RoutefusionService] Error finalizing transfer: ${error}`);
       throw error;
     }
   }

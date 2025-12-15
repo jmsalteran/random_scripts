@@ -28,7 +28,7 @@ export const TEST_INPUTS = {
   // Business Entity inputs
   createBusinessEntity: {
     email: `test${Date.now()}@example.com`, // Simple format for validation
-    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
+    phone: `201555${faker.string.numeric(4)}`, // US phone number: 201555 + 4 random digits (e.g., 2015550123)
     phone_country: "US",
     contact_first_name: faker.person.firstName(),
     contact_last_name: faker.person.lastName(),
@@ -57,7 +57,7 @@ export const TEST_INPUTS = {
       first_name: faker.person.firstName(),
       last_name: faker.person.lastName(),
       email: `test${Date.now()}@example.com`, // Simple format for validation
-      phone: `+1201${faker.string.numeric(7)}`, // US phone number with country code, starting with 201 (e.g., +12015550123)
+      phone: `+1201555${faker.string.numeric(4)}`, // US phone number with country code: +1201555 + 4 random digits (e.g., +12015550123)
       date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
       citizenship: "US" as ISO3166_1,
       residential_address: faker.location.streetAddress(),
@@ -111,7 +111,7 @@ export const TEST_INPUTS = {
     user_id: "" as UUID, // Will be set dynamically
     entity_id: "" as UUID, // Will be set dynamically
     email: `test${Date.now()}@example.com`, // Simple format for validation
-    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
+    phone: `201555${faker.string.numeric(4)}`, // US phone number: 201555 + 4 random digits (e.g., 2015550123)
     phone_country: "US" as ISO3166_1,
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
@@ -125,8 +125,8 @@ export const TEST_INPUTS = {
     name_on_bank_account: `${faker.person.firstName()} ${faker.person.lastName()}`,
     swift_bic: faker.string.alpha(4).toUpperCase() + "US" + faker.string.alphanumeric(2).toUpperCase() + faker.string.alphanumeric(3).toUpperCase(), // SWIFT BIC format: 4 letters + US + 2 alphanumeric + 3 alphanumeric
     account_type: "checking" as const,
-    account_number: faker.string.numeric(10),
-    routing_code: faker.string.numeric(9), // US routing number
+    account_number: `11319${faker.string.numeric(4)}`,
+    routing_code: generateValidRoutingNumber(), // US routing number with valid checksum (exactly 9 digits)
     currency: "USD" as any,
     bank_name: faker.company.name() + " Bank",
     branch_name: faker.location.city() + " Branch",
@@ -145,7 +145,7 @@ export const TEST_INPUTS = {
     user_id: "" as UUID, // Will be set dynamically
     entity_id: "" as UUID, // Will be set dynamically
     email: `test${Date.now()}@example.com`, // Simple format for validation
-    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
+    phone: `201555${faker.string.numeric(4)}`, // US phone number: 201555 + 4 random digits (e.g., 2015550123)
     phone_country: "US",
     business_name: faker.company.name(),
     business_address1: faker.location.streetAddress(),
@@ -159,7 +159,7 @@ export const TEST_INPUTS = {
     swift_bic: faker.string.alpha(4).toUpperCase() + "US" + faker.string.alphanumeric(2).toUpperCase() + faker.string.alphanumeric(3).toUpperCase(), // SWIFT BIC format: 4 letters + US + 2 alphanumeric + 3 alphanumeric
     account_type: "checking" as const,
     account_number: faker.string.numeric(10),
-    routing_code: faker.string.numeric(9), // US routing number
+    routing_code: generateValidRoutingNumber(), // US routing number with valid checksum (exactly 9 digits)
     currency: "USD" as any,
     bank_name: faker.company.name() + " Bank",
     branch_name: faker.location.city() + " Branch",
@@ -272,7 +272,7 @@ const BUSINESS_ENTITY_CONFIG = {
     country: "US",
   },
   contact: {
-    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
+    phone: `201555${faker.string.numeric(4)}`, // US phone number: 201555 + 4 random digits (e.g., 2015550123)
     phone_country: "US",
     contact_first_name: faker.person.firstName(),
     contact_last_name: faker.person.lastName(),
@@ -296,7 +296,7 @@ const REPRESENTATIVE_CONFIG = {
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
     email: `test${Date.now()}@example.com`, // Simple format for validation
-    phone: `+1201${faker.string.numeric(7)}`, // US phone number with country code, starting with 201 (e.g., +12015550123)
+    phone: `+1201555${faker.string.numeric(4)}`, // US phone number with country code: +1201555 + 4 random digits (e.g., +12015550123)
     date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
     citizenship: "US",
   },
@@ -336,7 +336,7 @@ const PERSONAL_BENEFICIARY_CONFIG = {
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
     email: `test${Date.now()}@example.com`, // Simple format for validation
-    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
+    phone: `201555${faker.string.numeric(4)}`, // US phone number: 201555 + 4 random digits (e.g., 2015550123)
     phone_country: "US",
     date_of_birth: faker.date.birthdate({ min: 25, max: 65, mode: 'age' }).toISOString(),
   },
@@ -353,7 +353,7 @@ const PERSONAL_BENEFICIARY_CONFIG = {
     swift_bic: faker.string.alpha(4).toUpperCase() + "US" + faker.string.alphanumeric(2).toUpperCase() + faker.string.alphanumeric(3).toUpperCase(), // SWIFT BIC format
     account_type: "checking" as const,
     account_number: faker.string.numeric(10),
-    routing_code: faker.string.numeric(9), // US routing number
+    routing_code: generateValidRoutingNumber(), // US routing number with valid checksum (exactly 9 digits)
     bank_name: faker.company.name() + " Bank",
     branch_name: faker.location.city() + " Branch",
     bank_address1: faker.location.streetAddress(),
@@ -380,7 +380,7 @@ const BUSINESS_BENEFICIARY_CONFIG = {
   },
   business: {
     email: `test${Date.now()}@example.com`, // Simple format for validation
-    phone: `201${faker.string.numeric(7)}`, // US phone number starting with 201 (e.g., 2015550123)
+    phone: `201555${faker.string.numeric(4)}`, // US phone number: 201555 + 4 random digits (e.g., 2015550123)
     phone_country: "US",
     tax_number: faker.string.numeric(9).replace(/(\d{2})(\d{7})/, "$1-$2"), // US EIN format
   },
@@ -396,7 +396,7 @@ const BUSINESS_BENEFICIARY_CONFIG = {
     swift_bic: faker.string.alpha(4).toUpperCase() + "US" + faker.string.alphanumeric(2).toUpperCase() + faker.string.alphanumeric(3).toUpperCase(), // SWIFT BIC format
     account_type: "checking" as const,
     account_number: faker.string.numeric(10),
-    routing_code: faker.string.numeric(9), // US routing number
+    routing_code: generateValidRoutingNumber(), // US routing number with valid checksum (exactly 9 digits)
     bank_name: faker.company.name() + " Bank",
     branch_name: faker.location.city() + " Branch",
     bank_address1: faker.location.streetAddress(),
@@ -412,6 +412,32 @@ const BUSINESS_BENEFICIARY_CONFIG = {
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+/**
+ * Generate a valid US routing number that passes the checksum validation
+ * Checksum algorithm: (3×d1) + (7×d2) + (1×d3) + (3×d4) + (7×d5) + (1×d6) + (3×d7) + (7×d8) + (1×d9) ≡ 0 (mod 10)
+ * @returns A 9-digit routing number that passes checksum validation
+ */
+function generateValidRoutingNumber(): string {
+  const weights = [3, 7, 1, 3, 7, 1, 3, 7, 1];
+  let routingNumber = '';
+  let sum = 0;
+
+  // Generate first 8 digits randomly
+  for (let i = 0; i < 8; i++) {
+    const digit = Math.floor(Math.random() * 10);
+    routingNumber += digit.toString();
+    sum += digit * weights[i];
+  }
+
+  // Calculate the 9th digit to make the checksum valid
+  // We need: sum + (9th_digit * 1) ≡ 0 (mod 10)
+  // So: 9th_digit = (10 - (sum % 10)) % 10
+  const ninthDigit = (10 - (sum % 10)) % 10;
+  routingNumber += ninthDigit.toString();
+
+  return routingNumber;
+}
 
 /**
  * Build business entity data from TEST_INPUTS
@@ -615,15 +641,8 @@ async function testFinalizeEntity(entityId?: string) {
     const id = entityId || TEST_INPUTS.testIds.businessId;
     const finalizedEntityId = await routefusionService.finalizeEntity(id);
     console.log("Entity finalized. Entity ID:", finalizedEntityId);
-    console.log("Note: The entity will immediately move to a pending state after finalizing.");
   } catch (error) {
-    console.error("\nError occurred during test:");
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    } else {
-      console.error("Unknown error:", error);
-    }
+    console.error("Error occurred during test:", error);
     throw error;
   }
 }
@@ -782,30 +801,22 @@ async function testCompleteOnboardingFlow() {
     // Step 1: Create or get user
     console.log("\nStep 1: Creating user...");
     let userId: string;
-    if (USER_CONFIG.createNewUser) {
-      try {
-        const userData: CreateUserInput = {
-          ...TEST_INPUTS.createUser,
-          email: `test${Date.now()}@example.com`,
-        };
-        const userResult = await routefusionService.createUser(userData);
-        // Handle different possible response structures
-        userId = userResult?.routefusionUserID || (userResult as any)?.createUser?.routefusionUserID || (userResult as any)?.id;
-        if (!userId) {
-          console.log("User created but ID not found in response, using default user ID");
-          console.log("Response structure:", JSON.stringify(userResult, null, 2));
-          userId = USER_CONFIG.defaultUserId;
-        } else {
-          console.log("User created with ID:", userId);
-        }
-      } catch (error) {
-        console.log("User creation failed, using default user ID");
-        userId = USER_CONFIG.defaultUserId;
-      }
-    } else {
-      userId = USER_CONFIG.defaultUserId;
-      console.log("Using default user ID:", userId);
-    }
+    // if (USER_CONFIG.createNewUser) {
+    //   const userData: CreateUserInput = {
+    //     ...TEST_INPUTS.createUser,
+    //     email: `test${Date.now()}@example.com`,
+    //   };
+    //   const userResult = await routefusionService.createUser(userData);
+    //   // Handle different possible response structures
+    //   userId = userResult?.routefusionUserID || (userResult as any)?.createUser?.routefusionUserID || (userResult as any)?.id;
+    //   if (!userId) {
+    //     throw new Error(`User creation failed: ID not found in response. Response: ${JSON.stringify(userResult, null, 2)}`);
+    //   }
+    //   console.log("User created with ID:", userId);
+    // } else {
+    //   userId = USER_CONFIG.defaultUserId;
+    //   console.log("Using default user ID:", userId);
+    // }
 
     // Step 2: Create business entity
     console.log("\nStep 2: Creating business entity...");
@@ -819,11 +830,13 @@ async function testCompleteOnboardingFlow() {
     );
 
     if (!validationResult.success) {
-      console.log("Validation failed:", validationResult.errors);
-      return;
+      throw new Error(`Business entity validation failed: ${validationResult.errors.join(", ")}`);
     }
 
     const entityId = await routefusionService.createBusinessEntity(entityData);
+    if (!entityId) {
+      throw new Error("Business entity creation failed: No entity ID returned");
+    }
     console.log("Business entity created with ID:", entityId);
 
     // Step 3: Upload business document
@@ -832,19 +845,21 @@ async function testCompleteOnboardingFlow() {
     const filePath = path.join(projectRoot, "test-document.txt");
 
     if (!fs.existsSync(filePath)) {
-      console.log("Test file not found, skipping document upload");
-    } else {
-      const fileBuffer = fs.readFileSync(filePath);
-      const file = new Blob([fileBuffer], { type: "text/plain" });
-      const fileTypes = [FileEnum.PROOF_OF_REGISTRATION, FileEnum.PROOF_OF_OWNERSHIP, FileEnum.BANK_STATEMENT];
-      for (const fileType of fileTypes) {
-        const document = await routefusionService.uploadEntityDocument({
-          entityId: entityId as UUID,
-          file: file,
-          file_enum: fileType,
-        });
-        console.log("Business document uploaded:", document.filename);
+      throw new Error(`Test file not found at: ${filePath}`);
+    }
+    const businessFileBuffer = fs.readFileSync(filePath);
+    const businessFile = new Blob([businessFileBuffer], { type: "text/plain" });
+    const businessFileTypes = [FileEnum.PROOF_OF_REGISTRATION, FileEnum.PROOF_OF_OWNERSHIP, FileEnum.BANK_STATEMENT];
+    for (const fileType of businessFileTypes) {
+      const document = await routefusionService.uploadEntityDocument({
+        entityId: entityId as UUID,
+        file: businessFile,
+        file_enum: fileType,
+      });
+      if (!document || !document.filename) {
+        throw new Error(`Failed to upload business document: ${fileType}`);
       }
+      console.log("Business document uploaded:", document.filename);
     }
 
     // Step 5: Create representative
@@ -860,46 +875,49 @@ async function testCompleteOnboardingFlow() {
       TEST_INPUTS.getEntityRequiredFields.business_type!
     );
     if (!validationResultRepresentative.success) {
-      console.log("Validation failed:", validationResultRepresentative.errors);
-      return;
+      throw new Error(`Representative validation failed: ${validationResultRepresentative.errors.join(", ")}`);
     }
     const representativeId = await routefusionService.createRepresentative(representativeData);
+    if (!representativeId) {
+      throw new Error("Representative creation failed: No representative ID returned");
+    }
     console.log("Representative created with ID:", representativeId);
 
     // Step 6: Upload representative document
     console.log("\nStep 5: Uploading representative document...");
-    if (fs.existsSync(filePath)) {
-      const fileBuffer = fs.readFileSync(filePath);
-      const file = new Blob([fileBuffer], { type: "text/plain" });
-      const fileTypes = [FileEnum.PASSPORT, FileEnum.PROOF_OF_ADDRESS, FileEnum.LIVENESS_CHECK];
-      for (const fileType of fileTypes) {
-        const repDocument = await routefusionService.uploadRepresentativeDocument({
-          representativeId: representativeId as UUID,
-          file: file,
-          file_enum: fileType,
-        });
-        console.log("Representative document uploaded:", repDocument.filename);
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Test file not found at: ${filePath}`);
+    }
+    const repFileBuffer = fs.readFileSync(filePath);
+    const repFile = new Blob([repFileBuffer], { type: "text/plain" });
+    const repFileTypes = [FileEnum.PASSPORT, FileEnum.PROOF_OF_ADDRESS, FileEnum.LIVENESS_CHECK];
+    for (const fileType of repFileTypes) {
+      const repDocument = await routefusionService.uploadRepresentativeDocument({
+        representativeId: representativeId as UUID,
+        file: repFile,
+        file_enum: fileType,
+      });
+      if (!repDocument || !repDocument.filename) {
+        throw new Error(`Failed to upload representative document: ${fileType}`);
       }
-    } else {
-      console.log("Test file not found, skipping representative document upload");
+      console.log("Representative document uploaded:", repDocument.filename);
     }
 
     // Step 7: Finalize entity
     console.log("\nStep 6: Finalizing entity...");
     const finalizedEntityId = await routefusionService.finalizeEntity(entityId);
+    if (!finalizedEntityId) {
+      throw new Error("Entity finalization failed: No finalized entity ID returned");
+    }
     console.log("Entity finalized. ID:", finalizedEntityId);
 
     // Step 8: Create personal beneficiary with validation
     console.log("\nStep 7: Creating personal beneficiary...");
 
-    // Get required fields first to understand what's needed
-    const personalBeneficiaryRequiredFields = await routefusionService.getBeneficiaryRequiredFields(TEST_INPUTS.getBeneficiaryRequiredFields);
-    console.log("Personal beneficiary required fields:", JSON.stringify(personalBeneficiaryRequiredFields.personal, null, 2));
-
     const personalBeneficiaryEmail = TEST_INPUTS.createPersonalBeneficiary.email.replace('@', `${Date.now()}@`);
     const personalBeneficiaryData: CreatePersonalBeneficiaryInput = {
       ...TEST_INPUTS.createPersonalBeneficiary,
-      user_id: userId as UUID,
+      // user_id: userId as UUID,
       entity_id: entityId as UUID,
       email: personalBeneficiaryEmail,
     };
@@ -913,31 +931,24 @@ async function testCompleteOnboardingFlow() {
     );
 
     if (!personalValidationResult.success) {
-      console.log("Personal beneficiary validation failed:", personalValidationResult.errors);
-      console.log("Attempting to create anyway...");
-    } else {
-      console.log("Personal beneficiary validation passed");
+      throw new Error(`Personal beneficiary validation failed: ${personalValidationResult.errors.join(", ")}`);
     }
+    console.log("Personal beneficiary validation passed");
 
     const personalBeneficiaryId = await routefusionService.createPersonalBeneficiary(personalBeneficiaryData);
+    if (!personalBeneficiaryId) {
+      throw new Error("Personal beneficiary creation failed: No beneficiary ID returned");
+    }
     console.log("Personal beneficiary created with ID:", personalBeneficiaryId);
 
     // Step 9: Create business beneficiary with validation
     console.log("\nStep 8: Creating business beneficiary...");
 
-    // Get required fields first to understand what's needed
-    const businessBeneficiaryRequiredFields = await routefusionService.getBeneficiaryRequiredFields({
-      bank_country: "US" as ISO3166_1, // Different from personal beneficiary
-      currency: "USD",
-      beneficiary_country: "US" as ISO3166_1,
-    });
-    console.log("Business beneficiary required fields:", JSON.stringify(businessBeneficiaryRequiredFields.business, null, 2));
-
     const beneficiaryBusinessName = faker.company.name();
     const businessBeneficiaryEmail = TEST_INPUTS.createBusinessBeneficiary.email.replace('@', `${Date.now()}@`);
     const businessBeneficiaryData: CreateBusinessBeneficiaryInput = {
       ...TEST_INPUTS.createBusinessBeneficiary,
-      user_id: userId as UUID,
+      // user_id: userId as UUID,
       entity_id: entityId as UUID,
       email: businessBeneficiaryEmail,
       business_name: beneficiaryBusinessName,
@@ -953,13 +964,14 @@ async function testCompleteOnboardingFlow() {
     );
 
     if (!businessValidationResult.success) {
-      console.log("Business beneficiary validation failed:", businessValidationResult.errors);
-      console.log("Attempting to create anyway...");
-    } else {
-      console.log("Business beneficiary validation passed");
+      throw new Error(`Business beneficiary validation failed: ${businessValidationResult.errors.join(", ")}`);
     }
+    console.log("Business beneficiary validation passed");
 
     const businessBeneficiaryId = await routefusionService.createBusinessBeneficiary(businessBeneficiaryData);
+    if (!businessBeneficiaryId) {
+      throw new Error("Business beneficiary creation failed: No beneficiary ID returned");
+    }
     console.log("Business beneficiary created with ID:", businessBeneficiaryId);
 
     console.log("\nComplete onboarding flow finished successfully!");
@@ -967,7 +979,7 @@ async function testCompleteOnboardingFlow() {
 
     return {
       entityId,
-      userId,
+      // userId,
       representativeId,
       personalBeneficiaryId,
       businessBeneficiaryId,
@@ -1094,7 +1106,7 @@ async function testCreateBusinessBeneficiary(userIdParam?: string, entityIdParam
 async function main() {
   // Use TEST_INPUTS.testIds for all test IDs
   const representativeId = TEST_INPUTS.testIds.representativeId;
-  const businessId = TEST_INPUTS.testIds.businessId;
+  const businessId = 'cc4a855d-428a-4df7-8178-f8300883613a'; //|| TEST_INPUTS.testIds.businessId;
   const walletId = TEST_INPUTS.testIds.walletId;
   const userId = TEST_INPUTS.testIds.userId;
   const beneficiaryId = TEST_INPUTS.testIds.beneficiaryId;
@@ -1108,7 +1120,7 @@ async function main() {
   // await testAddBalanceToWallet(walletId, "100.00");
   // NOT WORKING await testCreateTransfer(userId, businessId, beneficiaryId, walletId);
   // await testUploadEntityDocument(businessId);
-  //await testFinalizeEntity(businessId);
+  //await testFinalizeEntity('2cb5a547-74ce-41df-a7a5-4e152a5170c8');
   //await testCreateRepresentative(businessId);
   //await testUpdateRepresentative(representativeId);
   //await testDeleteRepresentative(representativeId);
@@ -1123,7 +1135,7 @@ async function main() {
   //await testValidateRepresentativeDataToSubmit(businessId);
 
   // Beneficiary tests
-  //await testCreatePersonalBeneficiary(userId, businessId);
+  // await testCreatePersonalBeneficiary(userId, businessId);
   //await testCreateBusinessBeneficiary(userId, businessId);
 }
 
