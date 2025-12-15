@@ -868,6 +868,10 @@ async function testCompleteOnboardingFlow() {
       ...TEST_INPUTS.createRepresentative,
       entity_id: entityId as UUID,
     };
+
+    const getRepresentativeRequiredFields = await routefusionService.getRepresentativeRequiredFields(TEST_INPUTS.getRepresentativeRequiredFields);
+    console.log("----------------------- Representative required fields:", JSON.stringify(getRepresentativeRequiredFields, null, 2));
+
     const validationResultRepresentative = await routefusionService.validateRepresentativeDataToSubmit(
       representativeData.representative,
       TEST_INPUTS.getEntityRequiredFields.country!,
