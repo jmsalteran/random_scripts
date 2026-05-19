@@ -1,0 +1,32 @@
+{
+  "path": "String (e.g., /api/v1/users/:id)",
+  "method": "String (GET, POST, etc.)",
+  "description": "String (Concise purpose of the endpoint)",
+  "file_path": "String (Absolute path to the file containing the handler)",
+  "decision_tree": {
+    "root": {
+      "description": "Initial entry point logic",
+      "method_calls": ["String (function names only)"],
+      "branches": [
+        {
+          "condition": "String (e.g., 'if auth token is missing')",
+          "outcome": "String (e.g., 'Return 401')",
+          "method_calls": ["verifyToken"],
+          "nested_branches": [] 
+        },
+        {
+          "condition": "String (e.g., 'if auth token is valid')",
+          "outcome": "Proceed to controller",
+          "method_calls": ["getUserProfile"],
+          "nested_branches": [
+            {
+               "condition": "String (e.g., 'user not found')",
+               "outcome": "Return 404",
+               "method_calls": []
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
